@@ -1,0 +1,18 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from typing import Any
+
+
+def canonical_json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def stable_id(prefix: str, *parts: Any) -> str:
+    digest = sha256_text("\x1f".join(canonical_json(part) for part in parts))
+    return f"{prefix}:sha256:{digest}"

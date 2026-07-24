@@ -1,0 +1,80 @@
+# Environnement Python
+.venv/
+venv/
+env/
+ENV/
+
+# Variables d’environnement et secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest et couverture
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Typage et linters
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# Build et packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# État local Mind
+.mind/
+
+# Exécutions et résultats générés
+runs/
+result.json
+evaluation-run-analysis.json
+
+# Logs et fichiers temporaires
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.pid
+
+# Bases de données locales
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+
+# Clés et certificats
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Fichiers de test temporaires
+test-results/
+tmp/
+temp/

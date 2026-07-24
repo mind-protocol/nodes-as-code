@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mind-node-as-code-v1-minimal"
+version = "0.1.0"
+description = "Minimal graph-authorized Node-as-Code runtime for FalkorDB, without an HTTP API."
+requires-python = ">=3.11"
+dependencies = [
+  "falkordb>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+mind-node-runtime = "mind_node_runtime.cli:main"
+mind-trigger-code = "mind_node_runtime.trigger:main"
+mind-seed-blueprint = "mind_node_runtime.seed:main"
+mind-code-materialize = "mind_node_runtime.materialize:main"
+mind-node-daemon = "mind_node_runtime.daemon:main"
+mind-node-watchdog = "mind_node_runtime.watchdog:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
