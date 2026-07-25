@@ -1,0 +1,19 @@
+{
+  "phase": "activate",
+  "status": "active",
+  "preconditions": {
+    "serverMaterialized": 1,
+    "contractValid": 1,
+    "capabilityRegistered": 1,
+    "mainLoopPresent": 1,
+    "contractLoopPresent": 1,
+    "serverPresent": 1,
+    "bindingUnique": 1
+  },
+  "bindingActive": true,
+  "serverId": "server:l2:mcp:nodes-as-code:v0",
+  "toolContractId": "contract:l2:mcp:graph-query-tool:v0",
+  "capabilityId": "capability:l2:mcp:graph-query-read-only:v0",
+  "mainLoopId": "space:l2:mcp:graph-query-v0",
+  "generatedAt": "2026-07-25T02:16:33.166554+00:00"
+}

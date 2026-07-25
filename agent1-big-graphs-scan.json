@@ -1,0 +1,1202 @@
+[
+  {
+    "graph": "mind_kernel_v0",
+    "nodes": 2073,
+    "canonicalFound": 0,
+    "canonicalMissing": 9,
+    "found": {},
+    "missing": [
+      "space:l2:mcp:nodes-as-code-server-v0",
+      "space:l2:mcp:graph-query-v0",
+      "space:l2:mcp:runtime-activation-v0",
+      "server:l2:mcp:nodes-as-code:v0",
+      "contract:l2:mcp:graph-query-tool:v0",
+      "capability:l2:mcp:graph-query-read-only:v0",
+      "binding:l2:mcp:graph-query:v0",
+      "code:l2:mcp:nodes-as-code-server:v0",
+      "code:l2:mcp:graph-query-execution:v0"
+    ],
+    "commonPropertyKeys": [
+      [
+        "id",
+        2073
+      ],
+      [
+        "node_type",
+        2073
+      ],
+      [
+        "subtype",
+        2073
+      ],
+      [
+        "status",
+        1778
+      ],
+      [
+        "graph_name",
+        891
+      ],
+      [
+        "repo_root",
+        891
+      ],
+      [
+        "emitted_at",
+        887
+      ],
+      [
+        "instance_id",
+        887
+      ],
+      [
+        "target_id",
+        870
+      ],
+      [
+        "executor_type",
+        586
+      ],
+      [
+        "program_id",
+        581
+      ],
+      [
+        "contract_id",
+        581
+      ],
+      [
+        "completed_at",
+        580
+      ],
+      [
+        "output_hash",
+        580
+      ],
+      [
+        "schedule_id",
+        574
+      ],
+      [
+        "started_at",
+        294
+      ],
+      [
+        "result_type",
+        292
+      ],
+      [
+        "priority",
+        292
+      ],
+      [
+        "max_attempts",
+        292
+      ],
+      [
+        "information_status",
+        292
+      ]
+    ],
+    "mcpCandidateCount": 1753,
+    "mcpCandidateSample": [
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53",
+        "properties": {
+          "id": "daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53",
+          "node_type": "thing",
+          "subtype": "runtime_instance",
+          "name": "Mind Kernel Daemon Instance",
+          "status": "running",
+          "graph_name": "mind_kernel_v0",
+          "repo_root": "C:\\Users\\reyno\\OneDrive\\Documents\\nodes-as-code",
+          "worker_id": "worker-local-1",
+          "last_heartbeat_at": 1784930798252,
+          "started_at": 1784928799462
+        }
+      },
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "heartbeat:daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53:118995253",
+        "properties": {
+          "id": "heartbeat:daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53:118995253",
+          "node_type": "moment",
+          "subtype": "daemon_heartbeat",
+          "status": "measured",
+          "emitted_at": 1784928799462,
+          "graph_name": "mind_kernel_v0",
+          "repo_root": "C:\\Users\\reyno\\OneDrive\\Documents\\nodes-as-code",
+          "instance_id": "daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53"
+        }
+      },
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "event:sha256:978a552a8b0654db7f6819a3c2955f85d0f65dc84378fe65c7d4f283753b8695",
+        "properties": {
+          "id": "event:sha256:978a552a8b0654db7f6819a3c2955f85d0f65dc84378fe65c7d4f283753b8695",
+          "node_type": "moment",
+          "subtype": "graph_event",
+          "status": "resolved",
+          "event_type": "periodic_code_materialization_tick",
+          "target_id": "space:mind-code:materialization-v0",
+          "source_actor_id": "actor:service:mind-kernel-daemon",
+          "schedule_id": "schedule:mind-code:periodic-code-materialization-v0",
+          "payload_json": "{\"contractId\":\"contract:mind-code:repository-code-materializer:v0\",\"inputs\":{\"graphAuthorityOnly\":false,\"operation\":\"sync\",\"outputDir\":\".mind/generated/code\",\"repoRoot\":\"C:\\\\Users\\\\reyno\\\\OneDrive\\\\Documents\\\\nodes-as-code\"},\"programId\":\"code:mind-code:repository-code-materializer:v0\",\"scheduleId\":\"schedule:mind-code:periodic-code-materialization-v0\"}",
+          "occurred_at": 1784928799472,
+          "matched_rule_count": 1,
+          "resolved_at": 1784928799528
+        }
+      },
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "intent:sha256:a9eefb85bd900a6606b14b2c49fb3e128b9cb5f432f4d1a0533557f85e469671",
+        "properties": {
+          "id": "intent:sha256:a9eefb85bd900a6606b14b2c49fb3e128b9cb5f432f4d1a0533557f85e469671",
+          "node_type": "moment",
+          "subtype": "execution_intent",
+          "status": "completed",
+          "event_id": "event:sha256:978a552a8b0654db7f6819a3c2955f85d0f65dc84378fe65c7d4f283753b8695",
+          "rule_id": "trigger-rule:mind-code:materialize-code-nodes:v0",
+          "rule_version": "0.1.0",
+          "program_id": "code:mind-code:repository-code-materializer:v0",
+          "contract_id": "contract:mind-code:repository-code-materializer:v0",
+          "target_id": "space:mind-code:materialization-v0",
+          "inputs_json": "{\"blueprintId\":\"space:mind-code:materialization-v0\",\"graphAuthorityOnly\":false,\"operation\":\"sync\",\"outputDir\":\".mind/generated/code\",\"repoRoot\":\"C:\\\\Users\\\\reyno\\\\OneDrive\\\\Documents\\\\nodes-as-code\",\"requestedMode\":\"sync\"}",
+          "priority": 200,
+          "attempt_count": 1,
+          "max_attempts": 3,
+          "next_attempt_at": 1784928799472,
+          "created_at": 1784928799472,
+          "claimed_by": "worker-local-1",
+          "lease_until": 0,
+          "schedule_id": "schedule:mind-code:periodic-code-materialization-v0",
+          "claimed_at": 1784928799532,
+          "completed_at": 1784928799626
+        }
+      },
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "result:run:db7dad94-8bd6-4a23-be2c-459e30309778",
+        "properties": {
+          "id": "result:run:db7dad94-8bd6-4a23-be2c-459e30309778",
+          "node_type": "thing",
+          "subtype": "evaluation_result",
+          "result_type": "code_materialization_result",
+          "information_status": "measured",
+          "value_json": "{\"created\":6,\"errors\":0,\"metadata_only\":0,\"outputRoot\":\"C:\\\\Users\\\\reyno\\\\OneDrive\\\\Documents\\\\nodes-as-code\\\\.mind\\\\generated\\\\code\",\"programs\":[{\"artifact_kind\":\"prompt_program\",\"authority_mode\":\"graph_source\",\"content_hash\":\"f3f7585e59816399371f8ce620a7157de5da51fa99022adf6b5c89212b53c1e0\",\"declared_hash\":\"f3f7585e59816399371f8ce620a7157de5da51fa99022adf6b5c89212b53c1e0\",\"declared_hash_matches\":true,\"language\":\"prompt_markdown\",\"path\":\"code/mind-blueprints/think-in-loops-prompt/v0.md\",\"program_id\":\"code:mind-blueprints:think-in-loops-prompt:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:19.608265+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"1fc46f89e6f33dbe4a277b3d0bec537f0053486b577ca9556395e07398402f0d\",\"declared_hash\":\"1fc46f89e6f33dbe4a277b3d0bec537f0053486b577ca9556395e07398402f0d\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-code/repository-code-materializer/v0.py\",\"program_id\":\"code:mind-code:repository-code-materializer:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:19.609807+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"908ab50a03888c3d4935ed415d060d71fe78441306a8c67b49e1fcb0352434b9\",\"declared_hash\":\"908ab50a03888c3d4935ed415d060d71fe78441306a8c67b49e1fcb0352434b9\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-kernel/execution-worker/v0.py\",\"program_id\":\"code:mind-kernel:execution-worker:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:19.613031+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"88893315b1ec66032d56569bdb50ec896b5730ab2e7eba749d355f296b8e7216\",\"declared_hash\":\"88893315b1ec66032d56569bdb50ec896b5730ab2e7eba749d355f296b8e7216\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-kernel/graph-scheduler/v0.py\",\"program_id\":\"code:mind-kernel:graph-scheduler:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:19.615387+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"ad007be79c66c91c61494fd85b0cb956ab5b1117278a6cba496afd5fd21e5f0d\",\"declared_hash\":\"ad007be79c66c91c61494fd85b0cb956ab5b1117278a6cba496afd5fd21e5f0d\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-kernel/runtime-daemon/v0.py\",\"program_id\":\"code:mind-kernel:runtime-daemon:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:19.619330+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"949884949901392213c3738866138491d6ad8eed750d461edbbec8542666dcc1\",\"declared_hash\":\"949884949901392213c3738866138491d6ad8eed750d461edbbec8542666dcc1\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-kernel/runtime-watchdog/v0.py\",\"program_id\":\"code:mind-kernel:runtime-watchdog:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:19.622663+00:00\",\"version\":\"0.1.0\"}],\"status\":\"completed\",\"unchanged\":0,\"updated\":0}",
+          "output_hash": "982fb636dab708b994ef2935ab27da57f0b6b99be2b4e2969db0cb584dd30b53",
+          "executor_type": "registered_python_entrypoint_v0",
+          "produced_at": 1784928799626
+        }
+      },
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "heartbeat:daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53:118995254",
+        "properties": {
+          "id": "heartbeat:daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53:118995254",
+          "node_type": "moment",
+          "subtype": "daemon_heartbeat",
+          "status": "measured",
+          "emitted_at": 1784928814493,
+          "graph_name": "mind_kernel_v0",
+          "repo_root": "C:\\Users\\reyno\\OneDrive\\Documents\\nodes-as-code",
+          "instance_id": "daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53"
+        }
+      },
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "heartbeat:daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53:118995255",
+        "properties": {
+          "id": "heartbeat:daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53:118995255",
+          "node_type": "moment",
+          "subtype": "daemon_heartbeat",
+          "status": "measured",
+          "emitted_at": 1784928829731,
+          "graph_name": "mind_kernel_v0",
+          "repo_root": "C:\\Users\\reyno\\OneDrive\\Documents\\nodes-as-code",
+          "instance_id": "daemon-instance:191d1c4b-052d-44a2-a0a5-e5d46a0c9b53"
+        }
+      },
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "event:sha256:03913fd15e691ac44cceb273dc12f3d49678ab1da6b4a24e1093f645735b4dae",
+        "properties": {
+          "id": "event:sha256:03913fd15e691ac44cceb273dc12f3d49678ab1da6b4a24e1093f645735b4dae",
+          "node_type": "moment",
+          "subtype": "graph_event",
+          "status": "resolved",
+          "event_type": "periodic_code_materialization_tick",
+          "target_id": "space:mind-code:materialization-v0",
+          "source_actor_id": "actor:service:mind-kernel-daemon",
+          "schedule_id": "schedule:mind-code:periodic-code-materialization-v0",
+          "payload_json": "{\"contractId\":\"contract:mind-code:repository-code-materializer:v0\",\"inputs\":{\"graphAuthorityOnly\":false,\"operation\":\"sync\",\"outputDir\":\".mind/generated/code\",\"repoRoot\":\"C:\\\\Users\\\\reyno\\\\OneDrive\\\\Documents\\\\nodes-as-code\"},\"programId\":\"code:mind-code:repository-code-materializer:v0\",\"scheduleId\":\"schedule:mind-code:periodic-code-materialization-v0\"}",
+          "occurred_at": 1784928829737,
+          "matched_rule_count": 1,
+          "resolved_at": 1784928829775
+        }
+      },
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "intent:sha256:d425ebf8f34671f817dbb2bbc11ae17609ee28cfd84110f579e32ac55c4b0a2a",
+        "properties": {
+          "id": "intent:sha256:d425ebf8f34671f817dbb2bbc11ae17609ee28cfd84110f579e32ac55c4b0a2a",
+          "node_type": "moment",
+          "subtype": "execution_intent",
+          "status": "completed",
+          "event_id": "event:sha256:03913fd15e691ac44cceb273dc12f3d49678ab1da6b4a24e1093f645735b4dae",
+          "rule_id": "trigger-rule:mind-code:materialize-code-nodes:v0",
+          "rule_version": "0.1.0",
+          "program_id": "code:mind-code:repository-code-materializer:v0",
+          "contract_id": "contract:mind-code:repository-code-materializer:v0",
+          "target_id": "space:mind-code:materialization-v0",
+          "inputs_json": "{\"blueprintId\":\"space:mind-code:materialization-v0\",\"graphAuthorityOnly\":false,\"operation\":\"sync\",\"outputDir\":\".mind/generated/code\",\"repoRoot\":\"C:\\\\Users\\\\reyno\\\\OneDrive\\\\Documents\\\\nodes-as-code\",\"requestedMode\":\"sync\"}",
+          "priority": 200,
+          "attempt_count": 1,
+          "max_attempts": 3,
+          "next_attempt_at": 1784928829737,
+          "created_at": 1784928829737,
+          "claimed_by": "worker-local-1",
+          "lease_until": 0,
+          "schedule_id": "schedule:mind-code:periodic-code-materialization-v0",
+          "claimed_at": 1784928829778,
+          "completed_at": 1784928829827
+        }
+      },
+      {
+        "labels": [
+          "RuntimeNode"
+        ],
+        "identity": "result:run:e2e22906-e6bc-446b-b20a-8dfb644eb245",
+        "properties": {
+          "id": "result:run:e2e22906-e6bc-446b-b20a-8dfb644eb245",
+          "node_type": "thing",
+          "subtype": "evaluation_result",
+          "result_type": "code_materialization_result",
+          "information_status": "measured",
+          "value_json": "{\"created\":0,\"errors\":0,\"metadata_only\":0,\"outputRoot\":\"C:\\\\Users\\\\reyno\\\\OneDrive\\\\Documents\\\\nodes-as-code\\\\.mind\\\\generated\\\\code\",\"programs\":[{\"artifact_kind\":\"prompt_program\",\"authority_mode\":\"graph_source\",\"content_hash\":\"f3f7585e59816399371f8ce620a7157de5da51fa99022adf6b5c89212b53c1e0\",\"declared_hash\":\"f3f7585e59816399371f8ce620a7157de5da51fa99022adf6b5c89212b53c1e0\",\"declared_hash_matches\":true,\"language\":\"prompt_markdown\",\"path\":\"code/mind-blueprints/think-in-loops-prompt/v0.md\",\"program_id\":\"code:mind-blueprints:think-in-loops-prompt:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:49.815327+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"1fc46f89e6f33dbe4a277b3d0bec537f0053486b577ca9556395e07398402f0d\",\"declared_hash\":\"1fc46f89e6f33dbe4a277b3d0bec537f0053486b577ca9556395e07398402f0d\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-code/repository-code-materializer/v0.py\",\"program_id\":\"code:mind-code:repository-code-materializer:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:49.816566+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"908ab50a03888c3d4935ed415d060d71fe78441306a8c67b49e1fcb0352434b9\",\"declared_hash\":\"908ab50a03888c3d4935ed415d060d71fe78441306a8c67b49e1fcb0352434b9\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-kernel/execution-worker/v0.py\",\"program_id\":\"code:mind-kernel:execution-worker:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:49.817726+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"88893315b1ec66032d56569bdb50ec896b5730ab2e7eba749d355f296b8e7216\",\"declared_hash\":\"88893315b1ec66032d56569bdb50ec896b5730ab2e7eba749d355f296b8e7216\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-kernel/graph-scheduler/v0.py\",\"program_id\":\"code:mind-kernel:graph-scheduler:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:49.818912+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"ad007be79c66c91c61494fd85b0cb956ab5b1117278a6cba496afd5fd21e5f0d\",\"declared_hash\":\"ad007be79c66c91c61494fd85b0cb956ab5b1117278a6cba496afd5fd21e5f0d\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-kernel/runtime-daemon/v0.py\",\"program_id\":\"code:mind-kernel:runtime-daemon:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:49.820213+00:00\",\"version\":\"0.1.0\"},{\"artifact_kind\":\"python_script\",\"authority_mode\":\"graph_source\",\"content_hash\":\"949884949901392213c3738866138491d6ad8eed750d461edbbec8542666dcc1\",\"declared_hash\":\"949884949901392213c3738866138491d6ad8eed750d461edbbec8542666dcc1\",\"declared_hash_matches\":true,\"language\":\"python\",\"path\":\"code/mind-kernel/runtime-watchdog/v0.py\",\"program_id\":\"code:mind-kernel:runtime-watchdog:v0\",\"source_kind\":\"source\",\"synced_at\":\"2026-07-24T21:33:49.821250+00:00\",\"version\":\"0.1.0\"}],\"status\":\"completed\",\"unchanged\":6,\"updated\":0}",
+          "output_hash": "4fb71e6379e0333fdff8bb69a79b3307aecfacf9825deb0b7736b8e20b926831",
+          "executor_type": "registered_python_entrypoint_v0",
+          "produced_at": 1784928829827
+        }
+      }
+    ]
+  },
+  {
+    "graph": "l2_mind_graphs",
+    "nodes": 907,
+    "canonicalFound": 0,
+    "canonicalMissing": 9,
+    "found": {},
+    "missing": [
+      "space:l2:mcp:nodes-as-code-server-v0",
+      "space:l2:mcp:graph-query-v0",
+      "space:l2:mcp:runtime-activation-v0",
+      "server:l2:mcp:nodes-as-code:v0",
+      "contract:l2:mcp:graph-query-tool:v0",
+      "capability:l2:mcp:graph-query-read-only:v0",
+      "binding:l2:mcp:graph-query:v0",
+      "code:l2:mcp:nodes-as-code-server:v0",
+      "code:l2:mcp:graph-query-execution:v0"
+    ],
+    "commonPropertyKeys": [
+      [
+        "id",
+        907
+      ],
+      [
+        "name",
+        901
+      ],
+      [
+        "nodeType",
+        901
+      ],
+      [
+        "semanticType",
+        878
+      ],
+      [
+        "runtimeKind",
+        772
+      ],
+      [
+        "path",
+        772
+      ],
+      [
+        "depth",
+        772
+      ],
+      [
+        "runtimeManaged",
+        772
+      ],
+      [
+        "runtimeRevision",
+        772
+      ],
+      [
+        "ext",
+        704
+      ],
+      [
+        "sizeBytes",
+        704
+      ],
+      [
+        "modifiedAt",
+        704
+      ],
+      [
+        "embedding",
+        131
+      ],
+      [
+        "embeddingModel",
+        131
+      ],
+      [
+        "embeddingModelVersion",
+        131
+      ],
+      [
+        "embeddingDimensions",
+        131
+      ],
+      [
+        "summary",
+        104
+      ],
+      [
+        "statement",
+        84
+      ],
+      [
+        "family",
+        49
+      ],
+      [
+        "phrase",
+        39
+      ]
+    ],
+    "mcpCandidateCount": 3,
+    "mcpCandidateSample": [
+      {
+        "labels": [
+          "MindNode"
+        ],
+        "identity": "repo:runtime/physics/graph/graph_query_utils.py",
+        "properties": {
+          "id": "repo:runtime/physics/graph/graph_query_utils.py",
+          "name": "graph_query_utils.py",
+          "nodeType": "repo_file",
+          "semanticType": "thing",
+          "runtimeKind": "repo_file",
+          "path": "runtime/physics/graph/graph_query_utils.py",
+          "ext": "py",
+          "sizeBytes": 15103,
+          "modifiedAt": "2026-07-23T21:04:29.588Z",
+          "depth": 4,
+          "runtimeManaged": true,
+          "runtimeRevision": 1784910648184
+        }
+      },
+      {
+        "labels": [
+          "MindNode"
+        ],
+        "identity": "repo:runtime/graph_query.py",
+        "properties": {
+          "id": "repo:runtime/graph_query.py",
+          "name": "graph_query.py",
+          "nodeType": "repo_file",
+          "semanticType": "thing",
+          "runtimeKind": "repo_file",
+          "path": "runtime/graph_query.py",
+          "ext": "py",
+          "sizeBytes": 16368,
+          "modifiedAt": "2026-07-23T21:04:29.513Z",
+          "depth": 2,
+          "runtimeManaged": true,
+          "runtimeRevision": 1784910648184
+        }
+      },
+      {
+        "labels": [
+          "Narrative"
+        ],
+        "identity": "decision-l2-mcp-resolvers-fragmentation",
+        "properties": {
+          "id": "decision-l2-mcp-resolvers-fragmentation",
+          "name": "Décision · Cartographie et Résolution des Outils MCP",
+          "nodeType": "Narrative",
+          "semanticType": "design_decision",
+          "statement": "Le système MCP est fragmenté par outil : sense effectue une lecture composée (L1/L2/L3), graph_query interroge le workspace L3 matérialisé, subcall requiert graph_ops nativement (erreur \"No graph connection\" si non injecté), et profile/call dépendent du registre L4.",
+          "summary": "Le système MCP est fragmenté par outil : sense effectue une lecture composée (L1/L2/L3), graph_query interroge le workspace L3 matérialisé, subcall requiert graph_ops nativement (erreur \"No graph connection\" si non injecté), et profile/call dépendent du registre L4.",
+          "status": "ratified",
+          "embedding": [
+            0.0932504808240314,
+            0,
+            -0.0932504808240314,
+            0,
+            0.0932504808240314,
+            0.0932504808240314,
+            0,
+            0,
+            0,
+            -0.0932504808240314,
+            0,
+            0.0932504808240314,
+            0,
+            0.0932504808240314,
+            0.279751442472094,
+            0,
+            0,
+            0.0932504808240314,
+            -0.279751442472094,
+            0,
+            0,
+            0,
+            -0.0932504808240314,
+            0,
+            0,
+            0.0932504808240314,
+            0,
+            -0.0932504808240314,
+            0,
+            -0.279751442472094,
+            -0.0932504808240314,
+            0.0932504808240314,
+            0,
+            0,
+            0,
+            0.0932504808240314,
+            0.0932504808240314,
+            -0.0932504808240314,
+            -0.0932504808240314,
+            0,
+            -0.0932504808240314,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.0932504808240314,
+            0.0932504808240314,
+            0.0932504808240314,
+            0,
+            -0.0932504808240314,
+            0,
+            0.186500961648063,
+            0,
+            0,
+            0.186500961648063,
+            0,
+            -0.0932504808240314,
+            0,
+            0,
+            0,
+            0,
+            -0.0932504808240314,
+            0.0932504808240314,
+            0,
+            0,
+            -0.0932504808240314,
+            -0.0932504808240314,
+            0.186500961648063,
+            0.0932504808240314,
+            0,
+            0,
+            0.186500961648063,
+            0.186500961648063,
+            -0.186500961648063,
+            -0.279751442472094,
+            0,
+            0,
+            -0.0932504808240314,
+            0,
+            0,
+            0.0932504808240314,
+            0,
+            0,
+            -0.279751442472094,
+            -0.0932504808240314,
+            0,
+            0,
+            0.0932504808240314,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.0932504808240314,
+            0,
+            -0.0932504808240314,
+            0,
+            0.0932504808240314,
+            0.0932504808240314,
+            0.0932504808240314,
+            0.0932504808240314,
+            -0.0932504808240314,
+            -0.0932504808240314,
+            0,
+            0.0932504808240314,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            -0.0932504808240314,
+            0,
+            0,
+            0,
+            0,
+            0.0932504808240314,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.0932504808240314,
+            -0.0932504808240314,
+            0.0932504808240314
+          ],
+          "embeddingModel": "local-hash-token-bigram",
+          "embeddingModelVersion": "1",
+          "embeddingDimensions": 128
+        }
+      }
+    ]
+  },
+  {
+    "graph": "l1_nlr_ai_staging",
+    "nodes": 11936,
+    "canonicalFound": 0,
+    "canonicalMissing": 9,
+    "found": {},
+    "missing": [
+      "space:l2:mcp:nodes-as-code-server-v0",
+      "space:l2:mcp:graph-query-v0",
+      "space:l2:mcp:runtime-activation-v0",
+      "server:l2:mcp:nodes-as-code:v0",
+      "contract:l2:mcp:graph-query-tool:v0",
+      "capability:l2:mcp:graph-query-read-only:v0",
+      "binding:l2:mcp:graph-query:v0",
+      "code:l2:mcp:nodes-as-code-server:v0",
+      "code:l2:mcp:graph-query-execution:v0"
+    ],
+    "commonPropertyKeys": [
+      [
+        "id",
+        10000
+      ],
+      [
+        "nodeType",
+        9999
+      ],
+      [
+        "name",
+        9999
+      ],
+      [
+        "epistemicStatus",
+        9999
+      ],
+      [
+        "embeddingModel",
+        9999
+      ],
+      [
+        "embeddingModelVersion",
+        9999
+      ],
+      [
+        "embeddingDimensions",
+        9999
+      ],
+      [
+        "embeddingLength",
+        9999
+      ],
+      [
+        "embeddingHead",
+        9999
+      ],
+      [
+        "semanticType",
+        9848
+      ],
+      [
+        "family",
+        8841
+      ],
+      [
+        "phrase",
+        8827
+      ],
+      [
+        "claimNature",
+        8825
+      ],
+      [
+        "sourceArtifact",
+        8780
+      ],
+      [
+        "sourceLocator",
+        8769
+      ],
+      [
+        "extractedAt",
+        8768
+      ],
+      [
+        "extractionMethod",
+        8764
+      ],
+      [
+        "importSourceKind",
+        8689
+      ],
+      [
+        "content",
+        8687
+      ],
+      [
+        "timestampBasis",
+        8681
+      ]
+    ],
+    "mcpCandidateCount": 1,
+    "mcpCandidateSample": [
+      {
+        "labels": [
+          "L1Node"
+        ],
+        "identity": "objective-nlr-detail-mind-endgames",
+        "properties": {
+          "id": "objective-nlr-detail-mind-endgames",
+          "name": "Détailler les endgames de Mind",
+          "nodeType": "objective",
+          "phrase": "Identifier depuis le graphe les endgames actifs et détailler chacun d'eux dans les vingt-quatre heures.",
+          "family": "Volition · documentation stratégique",
+          "summary": "Tâche déclarée par Nicolas : produire une description complète, cohérente et sourcée de chaque endgame actuellement déclaré, sans maintenir de liste parallèle dans le code.",
+          "status": "active",
+          "dueAt": "2026-07-24T05:05:26.9485555+02:00",
+          "deadlineTimezone": "Europe/Paris",
+          "deadlineSource": "échéance de vingt-quatre heures déclarée par le citoyen",
+          "targetDiscoveryJson": "{\"mode\":\"graph_query_at_execution\",\"rule\":\"Découvrir les endgames depuis les nœuds et datasets actifs du graphe au moment de chaque réveil.\",\"fixedTargetList\":false,\"completeness\":\"La couverture est évaluée contre le résultat courant de la requête, jamais contre un nombre codé en dur.\"}",
+          "requiredDetailPerEndgame": [
+            "Finalité et état désirable.",
+            "Statut actuel et frontière entre vision, design, prototype et résultat.",
+            "Mécanismes causaux proposés.",
+            "Prérequis et dépendances.",
+            "Risques, échecs possibles et garde-fous.",
+            "Signaux ou métriques permettant d'observer l'avancement.",
+            "Questions ouvertes, désaccords et informations manquantes.",
+            "Provenance des affirmations importantes."
+          ],
+          "successCriteria": [
+            "Chaque endgame actif découvert dans le graphe possède une fiche détaillée.",
+            "Les dépendances entre endgames sont rendues visibles.",
+            "Les lacunes restent explicitement inconnues au lieu d'être inventées.",
+            "Le corpus et ses tests demeurent valides.",
+            "Une observation datée consigne le résultat et les éléments restant ouverts."
+          ],
+          "requiresWakeManagement": true,
+          "wakeManagementJson": "{\"mode\":\"adaptive_until_due\",\"fixedCadence\":false,\"responsibility\":\"Le Citizen AI choisit ses réveils selon les endgames restant à couvrir, le temps disponible et les vérifications nécessaires.\",\"onEveryWake\":[\"Redécouvrir dynamiquement le périmètre courant des endgames.\",\"Choisir une unité de documentation bornée et vérifiable.\",\"Valider les changements et consigner l'avancement réel.\",\"Déclarer le prochain réveil avant de terminer le cycle.\"],\"onBlocked\":{\"notifyCitizenImmediately\":true,\"recipient\":\"Nicolas (NLR)\",\"requiredContent\":[\"La cause concrète du blocage.\",\"Les vérifications et alternatives déjà tentées.\",\"Les options restantes avec leurs conséquences.\",\"La décision, permission ou information précise attendue du citoyen.\"],\"rule\":\"Un blocage ne peut jamais terminer silencieusement un réveil.\"},\"stopConditions\":[\"Tous les endgames actifs découverts sont détaillés et validés.\",\"L'échéance est atteinte.\",\"Un blocage exige explicitement une décision ou une autorité du citoyen.\"]}",
+          "createdAt": "2026-07-23T05:05:26.9485555+02:00",
+          "sourceArtifact": "déclaration directe du citoyen",
+          "sourceLocator": "conversation Codex du 2026-07-23",
+          "epistemicStatus": "declared",
+          "layer": "citizen_state",
+          "embeddingModel": "local-hash-token-bigram",
+          "embeddingModelVersion": "1",
+          "embeddingDimensions": 128,
+          "embeddingLength": 128,
+          "embeddingHead": [
+            0,
+            -0.0901669634667432,
+            0,
+            0.180333926933486
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "graph": "l1_nlr_ai",
+    "nodes": 1209,
+    "canonicalFound": 0,
+    "canonicalMissing": 9,
+    "found": {},
+    "missing": [
+      "space:l2:mcp:nodes-as-code-server-v0",
+      "space:l2:mcp:graph-query-v0",
+      "space:l2:mcp:runtime-activation-v0",
+      "server:l2:mcp:nodes-as-code:v0",
+      "contract:l2:mcp:graph-query-tool:v0",
+      "capability:l2:mcp:graph-query-read-only:v0",
+      "binding:l2:mcp:graph-query:v0",
+      "code:l2:mcp:nodes-as-code-server:v0",
+      "code:l2:mcp:graph-query-execution:v0"
+    ],
+    "commonPropertyKeys": [
+      [
+        "id",
+        1209
+      ],
+      [
+        "name",
+        1208
+      ],
+      [
+        "nodeType",
+        1207
+      ],
+      [
+        "epistemicStatus",
+        1207
+      ],
+      [
+        "semanticType",
+        1121
+      ],
+      [
+        "facets",
+        1120
+      ],
+      [
+        "description",
+        1113
+      ],
+      [
+        "clusterId",
+        1113
+      ],
+      [
+        "citizen",
+        1113
+      ],
+      [
+        "injectsEnergy",
+        1113
+      ],
+      [
+        "initialEnergy",
+        1113
+      ],
+      [
+        "blueprintManaged",
+        1113
+      ],
+      [
+        "blueprintSource",
+        1113
+      ],
+      [
+        "blueprintVersion",
+        1113
+      ],
+      [
+        "blueprintReleaseHash",
+        1113
+      ],
+      [
+        "blueprintEntityHash",
+        1113
+      ],
+      [
+        "blueprintRetired",
+        1113
+      ],
+      [
+        "status",
+        170
+      ],
+      [
+        "phrase",
+        94
+      ],
+      [
+        "prompt",
+        88
+      ]
+    ],
+    "mcpCandidateCount": 1,
+    "mcpCandidateSample": [
+      {
+        "labels": [
+          "L1Node"
+        ],
+        "identity": "objective-nlr-detail-mind-endgames",
+        "properties": {
+          "id": "objective-nlr-detail-mind-endgames",
+          "name": "Détailler les endgames de Mind",
+          "nodeType": "objective",
+          "phrase": "Identifier depuis le graphe les endgames actifs et détailler chacun d'eux dans les vingt-quatre heures.",
+          "family": "Volition · documentation stratégique",
+          "summary": "Tâche déclarée par Nicolas : produire une description complète, cohérente et sourcée de chaque endgame actuellement déclaré, sans maintenir de liste parallèle dans le code.",
+          "status": "active",
+          "dueAt": "2026-07-24T05:05:26.9485555+02:00",
+          "deadlineTimezone": "Europe/Paris",
+          "deadlineSource": "échéance de vingt-quatre heures déclarée par le citoyen",
+          "targetDiscoveryJson": "{\"mode\":\"graph_query_at_execution\",\"rule\":\"Découvrir les endgames depuis les nœuds et datasets actifs du graphe au moment de chaque réveil.\",\"fixedTargetList\":false,\"completeness\":\"La couverture est évaluée contre le résultat courant de la requête, jamais contre un nombre codé en dur.\"}",
+          "requiredDetailPerEndgame": [
+            "Finalité et état désirable.",
+            "Statut actuel et frontière entre vision, design, prototype et résultat.",
+            "Mécanismes causaux proposés.",
+            "Prérequis et dépendances.",
+            "Risques, échecs possibles et garde-fous.",
+            "Signaux ou métriques permettant d'observer l'avancement.",
+            "Questions ouvertes, désaccords et informations manquantes.",
+            "Provenance des affirmations importantes."
+          ],
+          "successCriteria": [
+            "Chaque endgame actif découvert dans le graphe possède une fiche détaillée.",
+            "Les dépendances entre endgames sont rendues visibles.",
+            "Les lacunes restent explicitement inconnues au lieu d'être inventées.",
+            "Le corpus et ses tests demeurent valides.",
+            "Une observation datée consigne le résultat et les éléments restant ouverts."
+          ],
+          "requiresWakeManagement": true,
+          "wakeManagementJson": "{\"mode\":\"adaptive_until_due\",\"fixedCadence\":false,\"responsibility\":\"Le Citizen AI choisit ses réveils selon les endgames restant à couvrir, le temps disponible et les vérifications nécessaires.\",\"onEveryWake\":[\"Redécouvrir dynamiquement le périmètre courant des endgames.\",\"Choisir une unité de documentation bornée et vérifiable.\",\"Valider les changements et consigner l'avancement réel.\",\"Déclarer le prochain réveil avant de terminer le cycle.\"],\"onBlocked\":{\"notifyCitizenImmediately\":true,\"recipient\":\"Nicolas (NLR)\",\"requiredContent\":[\"La cause concrète du blocage.\",\"Les vérifications et alternatives déjà tentées.\",\"Les options restantes avec leurs conséquences.\",\"La décision, permission ou information précise attendue du citoyen.\"],\"rule\":\"Un blocage ne peut jamais terminer silencieusement un réveil.\"},\"stopConditions\":[\"Tous les endgames actifs découverts sont détaillés et validés.\",\"L'échéance est atteinte.\",\"Un blocage exige explicitement une décision ou une autorité du citoyen.\"]}",
+          "createdAt": "2026-07-23T05:05:26.9485555+02:00",
+          "sourceArtifact": "déclaration directe du citoyen",
+          "sourceLocator": "conversation Codex du 2026-07-23",
+          "epistemicStatus": "declared",
+          "layer": "citizen_state"
+        }
+      }
+    ]
+  },
+  {
+    "graph": "mind_causal",
+    "nodes": 5331,
+    "canonicalFound": 0,
+    "canonicalMissing": 9,
+    "found": {},
+    "missing": [
+      "space:l2:mcp:nodes-as-code-server-v0",
+      "space:l2:mcp:graph-query-v0",
+      "space:l2:mcp:runtime-activation-v0",
+      "server:l2:mcp:nodes-as-code:v0",
+      "contract:l2:mcp:graph-query-tool:v0",
+      "capability:l2:mcp:graph-query-read-only:v0",
+      "binding:l2:mcp:graph-query:v0",
+      "code:l2:mcp:nodes-as-code-server:v0",
+      "code:l2:mcp:graph-query-execution:v0"
+    ],
+    "commonPropertyKeys": [
+      [
+        "id",
+        5331
+      ],
+      [
+        "checkedAt",
+        3383
+      ],
+      [
+        "targetId",
+        3116
+      ],
+      [
+        "probeId",
+        2636
+      ],
+      [
+        "dimension",
+        2636
+      ],
+      [
+        "state",
+        2636
+      ],
+      [
+        "value",
+        2636
+      ],
+      [
+        "freshUntil",
+        2636
+      ],
+      [
+        "message",
+        2636
+      ],
+      [
+        "name",
+        1948
+      ],
+      [
+        "phrase",
+        1948
+      ],
+      [
+        "family",
+        1948
+      ],
+      [
+        "nodeType",
+        1948
+      ],
+      [
+        "semanticType",
+        1948
+      ],
+      [
+        "summary",
+        1948
+      ],
+      [
+        "clusterId",
+        1948
+      ],
+      [
+        "epistemicStatus",
+        1948
+      ],
+      [
+        "workStatus",
+        1948
+      ],
+      [
+        "priority",
+        1948
+      ],
+      [
+        "autonomyMode",
+        1948
+      ]
+    ],
+    "mcpCandidateCount": 0,
+    "mcpCandidateSample": []
+  },
+  {
+    "graph": "l2_mind_causal",
+    "nodes": 4664,
+    "canonicalFound": 0,
+    "canonicalMissing": 9,
+    "found": {},
+    "missing": [
+      "space:l2:mcp:nodes-as-code-server-v0",
+      "space:l2:mcp:graph-query-v0",
+      "space:l2:mcp:runtime-activation-v0",
+      "server:l2:mcp:nodes-as-code:v0",
+      "contract:l2:mcp:graph-query-tool:v0",
+      "capability:l2:mcp:graph-query-read-only:v0",
+      "binding:l2:mcp:graph-query:v0",
+      "code:l2:mcp:nodes-as-code-server:v0",
+      "code:l2:mcp:graph-query-execution:v0"
+    ],
+    "commonPropertyKeys": [
+      [
+        "id",
+        4664
+      ],
+      [
+        "targetId",
+        2945
+      ],
+      [
+        "checkedAt",
+        2745
+      ],
+      [
+        "probeId",
+        2471
+      ],
+      [
+        "dimension",
+        2471
+      ],
+      [
+        "state",
+        2471
+      ],
+      [
+        "value",
+        2471
+      ],
+      [
+        "freshUntil",
+        2471
+      ],
+      [
+        "message",
+        2471
+      ],
+      [
+        "name",
+        1919
+      ],
+      [
+        "phrase",
+        1919
+      ],
+      [
+        "family",
+        1919
+      ],
+      [
+        "nodeType",
+        1919
+      ],
+      [
+        "semanticType",
+        1919
+      ],
+      [
+        "summary",
+        1919
+      ],
+      [
+        "clusterId",
+        1919
+      ],
+      [
+        "epistemicStatus",
+        1919
+      ],
+      [
+        "workStatus",
+        1919
+      ],
+      [
+        "priority",
+        1919
+      ],
+      [
+        "autonomyMode",
+        1919
+      ]
+    ],
+    "mcpCandidateCount": 0,
+    "mcpCandidateSample": []
+  },
+  {
+    "graph": "nlr_ai",
+    "nodes": 1168,
+    "canonicalFound": 0,
+    "canonicalMissing": 9,
+    "found": {},
+    "missing": [
+      "space:l2:mcp:nodes-as-code-server-v0",
+      "space:l2:mcp:graph-query-v0",
+      "space:l2:mcp:runtime-activation-v0",
+      "server:l2:mcp:nodes-as-code:v0",
+      "contract:l2:mcp:graph-query-tool:v0",
+      "capability:l2:mcp:graph-query-read-only:v0",
+      "binding:l2:mcp:graph-query:v0",
+      "code:l2:mcp:nodes-as-code-server:v0",
+      "code:l2:mcp:graph-query-execution:v0"
+    ],
+    "commonPropertyKeys": [
+      [
+        "id",
+        1168
+      ],
+      [
+        "nodeType",
+        1167
+      ],
+      [
+        "semanticType",
+        1167
+      ],
+      [
+        "facets",
+        1167
+      ],
+      [
+        "name",
+        1167
+      ],
+      [
+        "description",
+        1167
+      ],
+      [
+        "epistemicStatus",
+        1167
+      ],
+      [
+        "clusterId",
+        1167
+      ],
+      [
+        "citizen",
+        1167
+      ],
+      [
+        "injectsEnergy",
+        1167
+      ],
+      [
+        "initialEnergy",
+        1167
+      ],
+      [
+        "blueprintManaged",
+        1167
+      ],
+      [
+        "blueprintSource",
+        1167
+      ],
+      [
+        "blueprintVersion",
+        1167
+      ],
+      [
+        "blueprintReleaseHash",
+        1167
+      ],
+      [
+        "blueprintEntityHash",
+        1167
+      ],
+      [
+        "blueprintRetired",
+        1167
+      ],
+      [
+        "status",
+        164
+      ],
+      [
+        "prompt",
+        88
+      ],
+      [
+        "questionIndex",
+        88
+      ]
+    ],
+    "mcpCandidateCount": 0,
+    "mcpCandidateSample": []
+  }
+]

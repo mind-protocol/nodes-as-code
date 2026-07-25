@@ -1,0 +1,17 @@
+{
+  "phase": "register",
+  "capabilityId": "capability:l2:mcp:graph-query-read-only:v0",
+  "executorType": "graph_query_ref",
+  "registered": true,
+  "capabilityInstances": 1,
+  "envelope": {
+    "graphRead": "allowed_with_resolved_scope",
+    "graphWrite": "forbidden",
+    "filesystemWrite": "forbidden",
+    "subprocess": "forbidden",
+    "secondaryNetwork": "forbidden"
+  },
+  "envelopeExact": true,
+  "workerAvailable": true,
+  "generatedAt": "2026-07-25T02:16:30.925344+00:00"
+}

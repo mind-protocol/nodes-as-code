@@ -1,0 +1,45 @@
+{
+  "agent": "Agent 1",
+  "generatedAt": "2026-07-24T23:49:26.329184+00:00",
+  "sourceGraph": "l2_mind_graphs",
+  "targetGraph": "mind_kernel_v0",
+  "mode": "dry_run",
+  "safeToApply": false,
+  "selection": {
+    "idScopes": [
+      "l2:mcp",
+      "mind-code:code-location"
+    ],
+    "explicitDependencyCount": 22
+  },
+  "source": {
+    "nodeCount": 0,
+    "relationshipCount": 0
+  },
+  "targetBefore": {
+    "existingNodeCount": 0,
+    "missingNodeCount": 0,
+    "existingRelationshipCount": 0,
+    "missingRelationshipCount": 0
+  },
+  "blockers": {
+    "missingCanonicalSource": [
+      "space:l2:mcp:nodes-as-code-server-v0",
+      "space:l2:mcp:graph-query-v0",
+      "space:l2:mcp:runtime-activation-v0",
+      "server:l2:mcp:nodes-as-code:v0",
+      "contract:l2:mcp:graph-query-tool:v0",
+      "capability:l2:mcp:graph-query-read-only:v0",
+      "binding:l2:mcp:graph-query:v0",
+      "code:l2:mcp:nodes-as-code-server:v0",
+      "code:l2:mcp:graph-query-execution:v0"
+    ],
+    "sourceDuplicateIds": [],
+    "targetDuplicateIds": [],
+    "versionConflicts": [],
+    "duplicateRelationships": []
+  },
+  "applied": false,
+  "targetCanonicalIds": {},
+  "status": "dry_run_blocked"
+}

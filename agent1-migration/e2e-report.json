@@ -1,0 +1,133 @@
+{
+  "phase": "e2e",
+  "generatedAt": "2026-07-25T02:16:26.726535+00:00",
+  "passed": 19,
+  "total": 22,
+  "allPassed": false,
+  "metrics": {
+    "forbidden_effect_count": 0,
+    "contract_drift_count": 1,
+    "unbound_execution_count": 0,
+    "duplicate_terminal_response_count": 0
+  },
+  "acceptance": {
+    "forbidden_effect_count": true,
+    "contract_drift_count": false,
+    "unbound_execution_count": true,
+    "duplicate_terminal_response_count": true
+  },
+  "nodeCountBefore": 3227,
+  "nodeCountAfter": 3229,
+  "tests": [
+    {
+      "test": "initialize.protocolVersion",
+      "pass": true,
+      "detail": "2024-11-05"
+    },
+    {
+      "test": "initialize.serverInfo",
+      "pass": true,
+      "detail": "{\"name\": \"mind-nodes-as-code\", \"version\": \"0.3.0\"}"
+    },
+    {
+      "test": "initialize.capabilities.tools",
+      "pass": true,
+      "detail": "{\"tools\": {\"listChanged\": false}}"
+    },
+    {
+      "test": "tools/list single graph_query",
+      "pass": false,
+      "detail": "[\"graph_cypher\", \"graph_query\", \"graph_upsert\", \"graph_write\", \"run\", \"sense\"]"
+    },
+    {
+      "test": "tools/list schema == contract (no drift)",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "test": "tools/call not error",
+      "pass": true,
+      "detail": "false"
+    },
+    {
+      "test": "tools/call information_status measured",
+      "pass": true,
+      "detail": "measured"
+    },
+    {
+      "test": "tools/call provenance present",
+      "pass": true,
+      "detail": "{\"graph\": \"mind_kernel_v0\", \"host\": \"127.0.0.1\", \"port\": 6379, \"bindingId\": \"binding:l2:mcp:graph-query:v0\", \"contractId\": \"contract:l2:mcp:graph-query-tool:v0\", \"capabilityId\": \"capability:l2:mcp:graph-query-read-only:v0\", \"mainLoopId\": \"space:l2:mcp:graph-query-v0\", \"executor\": \"graph_query_ref\", \"readOnly\": true, \"queryCount\": 1, \"durationMs\": 23.98, \"timestamp\": 1784945785498}"
+    },
+    {
+      "test": "tools/call bounded (limit<=3)",
+      "pass": true,
+      "detail": "[3]"
+    },
+    {
+      "test": "tools/call searched_scopes",
+      "pass": true,
+      "detail": "[\"l2:mcp\"]"
+    },
+    {
+      "test": "tools/call has redactions field",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "neg unknown tool -> error",
+      "pass": true,
+      "detail": "{\"code\": -32602, \"message\": \"unknown or inactive tool: 'definitely_not_a_tool'\"}"
+    },
+    {
+      "test": "neg invalid args -> error",
+      "pass": true,
+      "detail": "{\"code\": -32602, \"message\": \"`queries` must be a non-empty array of non-empty strings\"}"
+    },
+    {
+      "test": "neg forbidden scope -> error",
+      "pass": true,
+      "detail": "{\"code\": -32602, \"message\": \"`scope_filter` contains forbidden characters (scope rejected)\"}"
+    },
+    {
+      "test": "neg invalid frame -> parse error",
+      "pass": true,
+      "detail": "{\"code\": -32700, \"message\": \"parse error: Expecting value: line 1 column 1 (char 0)\"}"
+    },
+    {
+      "test": "neg unknown method -> -32601",
+      "pass": true,
+      "detail": "{\"code\": -32601, \"message\": \"method not found: no/such/method\"}"
+    },
+    {
+      "test": "no duplicate terminal responses",
+      "pass": true,
+      "detail": "{}"
+    },
+    {
+      "test": "inactive binding -> empty tools/list",
+      "pass": false,
+      "detail": "[\"graph_cypher\", \"graph_upsert\", \"graph_write\", \"run\", \"sense\"]"
+    },
+    {
+      "test": "inactive binding -> tools/call refused (no unbound exec)",
+      "pass": true,
+      "detail": "{\"code\": -32602, \"message\": \"unknown or inactive tool: 'graph_query'\"}"
+    },
+    {
+      "test": "forced timeout -> measurement_failed",
+      "pass": true,
+      "detail": "measurement_failed"
+    },
+    {
+      "test": "forced timeout -> isError true",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "read-only: no nodes deleted",
+      "pass": true,
+      "detail": "3227->3229"
+    }
+  ]
+}

@@ -74,6 +74,10 @@ $RECYCLE.BIN/
 *.p12
 *.pfx
 
+# Secrets MCP (token du run tool, audit)
+.mcp-run-token
+agent1-migration/run-audit.log
+
 # Fichiers de test temporaires
 test-results/
 tmp/

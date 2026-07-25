@@ -1,0 +1,16 @@
+{
+  "codeNodeId": "code:l2:mcp:nodes-as-code-server:v0",
+  "location": {
+    "kind": "package_entrypoint",
+    "repository": "mind-protocol/nodes-as-code",
+    "path": "src/mind_node_runtime/mcp_server.py",
+    "entrypoint": "mind_node_runtime.mcp_server:main",
+    "authority": "canonical"
+  },
+  "graphHash": "ba7a196f283ce334a84ef959cb2ce7f048fb7a61b75efd9f6e90f1cb3e93736f",
+  "materializedHash": "ba7a196f283ce334a84ef959cb2ce7f048fb7a61b75efd9f6e90f1cb3e93736f",
+  "status": "materialized_current",
+  "revisionId": "rev:ba7a196f283ce334",
+  "manifestEntry": "moment:l2:mcp:materialization:rev:ba7a196f283ce334",
+  "generatedAt": "2026-07-25T02:16:29.402269+00:00"
+}

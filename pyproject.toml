@@ -21,6 +21,7 @@ mind-seed-blueprint = "mind_node_runtime.seed:main"
 mind-code-materialize = "mind_node_runtime.materialize:main"
 mind-node-daemon = "mind_node_runtime.daemon:main"
 mind-node-watchdog = "mind_node_runtime.watchdog:main"
+mind-node-mcp = "mind_node_runtime.mcp_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

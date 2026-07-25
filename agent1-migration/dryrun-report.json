@@ -1,0 +1,23 @@
+{
+  "phase": "dryrun",
+  "generatedAt": "2026-07-25T00:12:24.645358+00:00",
+  "safeToApply": true,
+  "selectedNodes": 416,
+  "internalRelations": 627,
+  "explicitDepsPresent": 22,
+  "explicitDepsMissing": 0,
+  "nodeExisting": 7,
+  "nodeMissing": 409,
+  "targetDuplicateIds": [],
+  "criticalConflicts": [],
+  "relExisting": 1,
+  "relMissing": 626,
+  "duplicateRelationships": [],
+  "blockers": {
+    "sourceDuplicateIds": [],
+    "targetDuplicateIds": [],
+    "criticalConflicts": [],
+    "duplicateRelationships": [],
+    "canonicalMissingInSource": []
+  }
+}

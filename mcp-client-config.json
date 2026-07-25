@@ -1,0 +1,16 @@
+{
+  "name": "mind-nodes-as-code",
+  "command": "C:\\Users\\reyno\\OneDrive\\Documents\\nodes-as-code\\.venv\\Scripts\\python.exe",
+  "args": [
+    "-m",
+    "mind_node_runtime.mcp_server",
+    "--graph",
+    "mind_kernel_v0"
+  ],
+  "cwd": "C:\\Users\\reyno\\OneDrive\\Documents\\nodes-as-code",
+  "env": {
+    "FALKOR_HOST": "127.0.0.1",
+    "FALKOR_PORT": "6379",
+    "FALKOR_GRAPH": "mind_kernel_v0"
+  }
+}

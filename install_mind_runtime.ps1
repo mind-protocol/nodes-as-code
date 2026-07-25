@@ -37,7 +37,7 @@ Register-ScheduledTask `
   -Description "Maintient le daemon Mind vivant; les cadences métier sont lues dans FalkorDB." `
   -Force | Out-Null
 
-$WatchdogArguments = "-NoProfile -ExecutionPolicy Bypass -File `"$WatchdogScript`" -Graph `"$Graph`" -Project `"$Project`" -DaemonTaskName `"$DaemonTaskName`""
+$WatchdogArguments = "-WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File `"$WatchdogScript`" -Graph `"$Graph`" -Project `"$Project`" -DaemonTaskName `"$DaemonTaskName`""
 $WatchdogAction = New-ScheduledTaskAction `
   -Execute "powershell.exe" `
   -Argument $WatchdogArguments `

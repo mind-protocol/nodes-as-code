@@ -95,8 +95,8 @@ class GraphStore:
         rows = self.read(
             """
             MATCH (p)
-            WHERE p.node_type='thing' AND p.subtype='code'
-            RETURN p.id, p.node_type, p.subtype, p.name, p.version, p.language,
+            WHERE p.node_type='thing' AND coalesce(p.subtype, p.type)='code'
+            RETURN p.id, p.node_type, coalesce(p.subtype, p.type), p.name, p.version, p.language,
                    coalesce(p.artifact_kind, p.artifactKind),
                    coalesce(p.authority_mode, p.authorityMode),
                    p.source, coalesce(p.source_hash, p.sourceHash),
@@ -113,8 +113,8 @@ class GraphStore:
         rows = self.read(
             """
             MATCH (p {id:$id})
-            WHERE p.node_type='thing' AND p.subtype='code'
-            RETURN p.id, p.node_type, p.subtype, p.name, p.version, p.language,
+            WHERE p.node_type='thing' AND coalesce(p.subtype, p.type)='code'
+            RETURN p.id, p.node_type, coalesce(p.subtype, p.type), p.name, p.version, p.language,
                    coalesce(p.artifact_kind, p.artifactKind),
                    coalesce(p.authority_mode, p.authorityMode),
                    p.source, coalesce(p.source_hash, p.sourceHash),

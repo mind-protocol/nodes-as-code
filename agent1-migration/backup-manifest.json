@@ -1,0 +1,17 @@
+{
+  "phase": "backup",
+  "generatedAt": "2026-07-25T00:12:15.197250+00:00",
+  "sourceBackup": {
+    "path": "C:\\Users\\reyno\\OneDrive\\Documents\\nodes-as-code\\agent1-migration\\workspace.backup.20260725T001214Z.json",
+    "sha256": "0d0b3e694b4826cfabd654a8db26bcdbf2f1ed7935369e72d31dce644b824a5b",
+    "bytes": 4180060
+  },
+  "targetBackup": {
+    "path": "C:\\Users\\reyno\\OneDrive\\Documents\\nodes-as-code\\agent1-migration\\mind_kernel_v0.backup.20260725T001214Z.json",
+    "sha256": "9363aaec84b265705878b8eb8d9e7beb1da4b509d1e239c11ffcb2aa8fc63fb3",
+    "bytes": 4182355,
+    "nodeCount": 2296,
+    "relCount": 4200,
+    "idlessNodes": 0
+  }
+}

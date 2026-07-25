@@ -1,0 +1,41 @@
+{
+  "phase": "clean-env-probe",
+  "generatedAt": "2026-07-25T02:18:48.529988+00:00",
+  "cleanEnv": true,
+  "inheritedFalkorVars": false,
+  "allProbesPassed": true,
+  "probes": {
+    "initialize": {
+      "ok": true,
+      "serverInfo": {
+        "name": "mind-nodes-as-code",
+        "version": "0.3.0"
+      },
+      "protocolVersion": "2024-11-05"
+    },
+    "tools/list": {
+      "ok": true,
+      "tools": [
+        "graph_cypher",
+        "graph_query",
+        "graph_upsert",
+        "graph_write",
+        "run",
+        "sense"
+      ]
+    },
+    "tools/call": {
+      "ok": true,
+      "information_status": "measured",
+      "matchCounts": [
+        3
+      ],
+      "provenanceExecutor": "graph_query_ref",
+      "sampleMatches": [
+        "algorithm:l2:mcp:graph-query",
+        "algorithm:l2:mcp:graph-query-admission",
+        "algorithm:l2:mcp:graph-query-execution"
+      ]
+    }
+  }
+}
