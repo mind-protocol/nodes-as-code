@@ -1,4 +1,4 @@
-
+﻿
 ifrom mind_node_runtime.config import Settings
 from mind_node_runtime.graph import GraphStore
 from collections import defaultdict
@@ -71,29 +71,29 @@ nodes = [
         "id": parent_space,
         "node_type": "space",
         "subtype": "self_verifying_loop",
-        "name": "Project Health · Brain L1 Validation v0",
+        "name": "Project Health Â· Brain L1 Validation v0",
         "status": "unknown",
         "content": (
-            "Loop parente de santé du projet Brain L1. Agrège les dimensions critiques "
-            "sans moyenne masquante. UNKNOWN si une mesure critique manque ou échoue; "
-            "UNHEALTHY si une dimension critique échoue; DEGRADED en cas d'avertissement "
-            "ou régression non critique; HEALTHY uniquement si toutes les dimensions "
-            "critiques sont mesurées et saines et si l'acceptation end-to-end est saine."
+            "Loop parente de santÃ© du projet Brain L1. AgrÃ¨ge les dimensions critiques "
+            "sans moyenne masquante. UNKNOWN si une mesure critique manque ou Ã©choue; "
+            "UNHEALTHY si une dimension critique Ã©choue; DEGRADED en cas d'avertissement "
+            "ou rÃ©gression non critique; HEALTHY uniquement si toutes les dimensions "
+            "critiques sont mesurÃ©es et saines et si l'acceptation end-to-end est saine."
         ),
     },
     {
         "id": "health:mind-projects:brain-l1-validation",
         "node_type": "narrative",
         "subtype": "health",
-        "name": "Health · Brain L1 Validation Project",
+        "name": "Health Â· Brain L1 Validation Project",
         "status": "unknown",
-        "content": "Résumé global de santé du projet. Ne doit jamais être healthy par défaut.",
+        "content": "RÃ©sumÃ© global de santÃ© du projet. Ne doit jamais Ãªtre healthy par dÃ©faut.",
     },
     {
         "id": "metric:mind-projects:brain-l1-validation-health",
         "node_type": "thing",
         "subtype": "metric",
-        "name": "Metric · Brain L1 Validation Global Health",
+        "name": "Metric Â· Brain L1 Validation Global Health",
         "status": "unknown",
         "content": json.dumps({
             "aggregation": "critical_worst_status",
@@ -106,25 +106,25 @@ nodes = [
         "id": "observer:mind-projects:brain-l1-validation-health",
         "node_type": "thing",
         "subtype": "observer",
-        "name": "Observer · Brain L1 Validation Global Health",
+        "name": "Observer Â· Brain L1 Validation Global Health",
         "status": "unknown",
-        "content": "Agrège les health enfants, détecte mesures absentes/stale et bloque le healthy artificiel.",
+        "content": "AgrÃ¨ge les health enfants, dÃ©tecte mesures absentes/stale et bloque le healthy artificiel.",
     },
     {
         "id": "objective:mind-projects:brain-l1-validation-health-honest",
         "node_type": "narrative",
         "subtype": "objective",
-        "name": "Donner une vision honnête et actionnable de la santé du projet Brain L1",
+        "name": "Donner une vision honnÃªte et actionnable de la santÃ© du projet Brain L1",
         "status": "active",
-        "content": "Séparer progression, santé et readiness; préserver les blockers et mesures manquantes.",
+        "content": "SÃ©parer progression, santÃ© et readiness; prÃ©server les blockers et mesures manquantes.",
     },
     {
         "id": "validation:mind-projects:brain-l1-validation-health-contract",
         "node_type": "narrative",
         "subtype": "validation",
-        "name": "Validation · Brain L1 Project Health Contract",
+        "name": "Validation Â· Brain L1 Project Health Contract",
         "status": "unknown",
-        "content": "Valide que l'agrégation ne masque aucune dimension critique et n'invente aucune mesure.",
+        "content": "Valide que l'agrÃ©gation ne masque aucune dimension critique et n'invente aucune mesure.",
     },
 ]
 
@@ -155,26 +155,26 @@ for d in dimensions:
             "id": space_id,
             "node_type": "space",
             "subtype": "self_verifying_loop",
-            "name": f"Project Health · {d['name']} v0",
+            "name": f"Project Health Â· {d['name']} v0",
             "status": "unknown",
             "content": (
-                f"Health loop du chantier {d['name']}. Statut initial unknown jusqu'à "
-                "mesure réelle. Produit métriques, blockers, fraîcheur et readiness locale."
+                f"Health loop du chantier {d['name']}. Statut initial unknown jusqu'Ã  "
+                "mesure rÃ©elle. Produit mÃ©triques, blockers, fraÃ®cheur et readiness locale."
             ),
         },
         {
             "id": health_id,
             "node_type": "narrative",
             "subtype": "health",
-            "name": f"Health ·- Brain L1 {d['name']}",
+            "name": f"Health Â·- Brain L1 {d['name']}",
             "status": "unknown",
-            "content": f"Résumé de santé mesurée pour {d['name']}.",
+            "content": f"RÃ©sumÃ© de santÃ© mesurÃ©e pour {d['name']}.",
         },
         {
             "id": metric_id,
             "node_type": "thing",
             "subtype": "metric",
-            "name": f"Metric ·- Brain L1 {d['name']} Health",
+            "name": f"Metric Â·- Brain L1 {d['name']} Health",
             "status": "unknown",
             "content": json.dumps({
                 "criteria": d["criteria"],
@@ -187,25 +187,25 @@ for d in dimensions:
             "id": observer_id,
             "node_type": "thing",
             "subtype": "observer",
-            "name": f"Observer · Brain L1 {d['name']} Health",
+            "name": f"Observer Â· Brain L1 {d['name']} Health",
             "status": "unknown",
-            "content": f"Observe les critères {', '.join(d['criteria'])}; signale stale, failed et blockers.",
+            "content": f"Observe les critÃ¨res {', '.join(d['criteria'])}; signale stale, failed et blockers.",
         },
         {
             "id": objective_id,
             "node_type": "narrative",
             "subtype": "objective",
-            "name": f"Mesurer honnêtement la santé de {d['name']}",
+            "name": f"Mesurer honnÃªtement la santÃ© de {d['name']}",
             "status": "active",
-            "content": "Aucune santé positive sans mesure réelle et traçable.",
+            "content": "Aucune santÃ© positive sans mesure rÃ©elle et traÃ§able.",
         },
         {
             "id": validation_id,
             "node_type": "narrative",
             "subtype": "validation",
-            "name": f"Validation · Brain L1 {d['name']} Health Contract",
+            "name": f"Validation Â· Brain L1 {d['name']} Health Contract",
             "status": "unknown",
-            "content": "Valide schéma, fraîcheur, provenance, blockers et transitions de statut.",
+            "content": "Valide schÃ©ma, fraÃ®cheur, provenance, blockers et transitions de statut.",
         },
     ])
 
@@ -239,7 +239,7 @@ required = {
 rows = store.read(
     "MATCH (n) WHERE n.id IN $ids RETURN collect(n.id)",
     {"ids": list(required)},
-}
+)
 found = set(rows[0][0] if rows else [])
 missing = required - found
 if missing:
