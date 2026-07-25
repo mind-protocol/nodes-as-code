@@ -1,5 +1,5 @@
 ﻿
-ifrom mind_node_runtime.config import Settings
+from mind_node_runtime.config import Settings
 from mind_node_runtime.graph import GraphStore
 from collections import defaultdict
 import json
