@@ -394,6 +394,39 @@ SMART_MERGE_SIMILARITY = 0.80
 SMART_DIFFERENTIATE_SIMILARITY = 0.35
 MAX_ID_SUFFIX_TRIES = 1000
 
+# --- Graph-discipline hygiene advisors -------------------------------------
+# Non-blocking coaching run after a write: each advisor inspects a just-written
+# node and returns suggestions that push the graph toward the loop discipline in
+# CLAUDE.md (justified claims, complete causal chains, evidence-backed status).
+# Suggestions never fail or block the write; they are reported for the caller to
+# act on. The registry (HYGIENE_ADVISORS) is the single extension point.
+
+# Narrative subtypes that assert a deliberate choice/claim and therefore warrant
+# an explicit justification. Observational/structural subtypes (fact, vocabulary,
+# task, justification itself, ...) are intentionally excluded to avoid noise.
+JUSTIFICATION_EXPECTED_SUBTYPES = {
+    "objective", "decision", "behavior", "algorithm", "pattern",
+    "policy_rule", "recommendation",
+}
+
+# Required loop roles -> the canonical relation type(s) that satisfy each role.
+# A Space is "complete" when every role is reachable by at least one of its
+# relation aliases. Mirrors REQUIRED_CHAIN_ROLES using relations that exist live.
+LOOP_ROLE_RELATIONS = {
+    "objective": ("HAS_OBJECTIVE",),
+    "pattern": ("USES_PATTERN", "HAS_PATTERN"),
+    "vocabulary": ("USES_VOCABULARY",),
+    "behavior": ("HAS_BEHAVIOR",),
+    "algorithm": ("HAS_ALGORITHM",),
+    "code": ("HAS_CODE_DEFINITION", "DEFINED_BY_CODE"),
+    "implementation": ("HAS_IMPLEMENTATION", "IMPLEMENTED_BY"),
+    "justification": ("JUSTIFIED_BY",),
+    "validation": ("VALIDATED_BY",),
+    "observability_algorithm": ("OBSERVED_BY", "OBSERVES"),
+    "metric": ("MEASURED_BY", "MEASURES"),
+    "health": ("HAS_HEALTH", "PRODUCES_HEALTH"),
+}
+
 
 def _verify_write_password(server_password: str | None, args: dict[str, Any]) -> None:
     if not isinstance(args, dict):
