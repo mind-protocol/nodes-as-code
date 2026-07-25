@@ -36,7 +36,7 @@ class Worker:
     def resolve_pending_events(self, limit: int = 50) -> int:
         event_rows = self.store.read(
             """
-            MATCH (event)
+            MATCH (event:RuntimeNode)
             WHERE event.node_type='moment'
               AND event.subtype='graph_event'
               AND event.status='pending'
