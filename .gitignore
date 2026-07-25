@@ -82,6 +82,8 @@ agent1-migration/run-audit.log
 test-results/
 tmp/
 temp/ 
-# Runtime process state 
-agent1-migration/pids/ 
-agent1-migration/endpoint-logs/ 
+# Runtime process state
+agent1-migration/pids/
+agent1-migration/endpoint-logs/
+agent1-migration/detached-logs/
+agent1-migration/response-times.jsonl 
