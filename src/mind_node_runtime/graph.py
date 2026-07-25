@@ -33,7 +33,7 @@ class GraphStore:
     def load_target(self, target_id: str) -> dict[str, Any]:
         rows = self.read(
             """
-            MATCH (n {id:$id})
+            MATCH (n:RuntimeNode {id:$id})
             RETURN n.id, n.node_type, n.subtype, n.name, n.status, n.content
             """,
             {"id": target_id},
@@ -53,7 +53,7 @@ class GraphStore:
     def load_neighbours(self, target_id: str) -> list[dict[str, Any]]:
         rows = self.read(
             """
-            MATCH (target {id:$id})-[r]-(n)
+            MATCH (target:RuntimeNode {id:$id})-[r]-(n)
             RETURN n.id, n.node_type, n.subtype, n.name, n.status, n.content, type(r)
             """,
             {"id": target_id},
@@ -94,7 +94,7 @@ class GraphStore:
     def list_code_nodes(self) -> list[dict[str, Any]]:
         rows = self.read(
             """
-            MATCH (p)
+            MATCH (p:RuntimeNode)
             WHERE p.node_type='thing' AND coalesce(p.subtype, p.type)='code'
             RETURN p.id, p.node_type, coalesce(p.subtype, p.type), p.name, p.version, p.language,
                    coalesce(p.artifact_kind, p.artifactKind),
@@ -112,7 +112,7 @@ class GraphStore:
     def load_code_node(self, program_id: str) -> dict[str, Any]:
         rows = self.read(
             """
-            MATCH (p {id:$id})
+            MATCH (p:RuntimeNode {id:$id})
             WHERE p.node_type='thing' AND coalesce(p.subtype, p.type)='code'
             RETURN p.id, p.node_type, coalesce(p.subtype, p.type), p.name, p.version, p.language,
                    coalesce(p.artifact_kind, p.artifactKind),
@@ -132,7 +132,7 @@ class GraphStore:
     def load_program(self, program_id: str) -> dict[str, Any]:
         rows = self.read(
             """
-            MATCH (p {id:$id})
+            MATCH (p:RuntimeNode {id:$id})
             RETURN p.id, p.version, p.source, p.source_hash, p.executor_type,
                    p.artifact_kind, p.fallback_executor, p.entrypoint,
                    p.authority_mode, p.status
@@ -158,7 +158,7 @@ class GraphStore:
     def load_contract(self, contract_id: str) -> dict[str, Any]:
         rows = self.read(
             """
-            MATCH (c {id:$id})
+            MATCH (c:RuntimeNode {id:$id})
             RETURN c.id, c.version, c.input_schema_json, c.output_schema_json,
                    c.result_type
             """,

@@ -670,7 +670,7 @@ GRAPH_WRITE_NODE_FIELDS = {
     "content", "synthesis", "status", "promise", "weight", "energy",
 }
 GRAPH_WRITE_CONTROL_FIELDS = {
-    "password", "check_orphans", "check_similarity", "suggest_links",
+    "password", "check_orphans", "check_similarity", "suggest_links", "on_id_conflict",
 }
 # (argument key, relation type, is_list). Implicit relations a shorthand node
 # may request; expressed with this executor's canonical source/relation/target.
@@ -764,6 +764,7 @@ def execute_graph_upsert(store: GraphStore, args: dict[str, Any], server_passwor
     check_orphans = args.get("check_orphans", True)
     check_similarity = args.get("check_similarity", True)
     suggest_links = args.get("suggest_links", True)
+    on_id_conflict = args.get("on_id_conflict", "merge")
 
     if not isinstance(nodes, list) or not isinstance(relations, list):
         raise ToolError("`nodes` and `relations` must be arrays")
@@ -773,9 +774,13 @@ def execute_graph_upsert(store: GraphStore, args: dict[str, Any], server_passwor
         raise ToolError(f"too many nodes (max {MAX_WRITE_NODES})")
     if len(relations) > MAX_WRITE_RELATIONS:
         raise ToolError(f"too many relations (max {MAX_WRITE_RELATIONS})")
+    if on_id_conflict not in ID_CONFLICT_MODES:
+        raise ToolError(f"`on_id_conflict` must be one of {sorted(ID_CONFLICT_MODES)}")
 
     validation_errors = []
     suggested_corrections = []
+    id_resolutions: list[dict[str, Any]] = []
+    id_map: dict[str, str] = {}  # requested id -> effective id (only when differentiated)
     nodes_upserted = 0
     upserted_ids = []
 
@@ -803,15 +808,40 @@ def execute_graph_upsert(store: GraphStore, args: dict[str, Any], server_passwor
         else:
             valid_node_type = normalized_type
 
+        # Resolve id collisions before writing. `merge` keeps historic behavior
+        # (MERGE-by-id updates in place). Other modes inspect the stored node.
+        effective_id = nid
+        if on_id_conflict != "merge":
+            ex_rows = store.read(
+                "MATCH (n {id:$id}) RETURN n.node_type, n.name, n.content", {"id": nid}
+            )
+            if ex_rows:
+                existing = {"node_type": ex_rows[0][0], "name": ex_rows[0][1], "content": ex_rows[0][2]}
+                if on_id_conflict == "reject":
+                    raise ToolError(f"id already exists: {nid!r} (on_id_conflict=reject)")
+                if on_id_conflict == "differentiate":
+                    effective_id = _next_available_id(store, nid)
+                    id_resolutions.append({"requested_id": nid, "effective_id": effective_id,
+                                           "decision": "differentiate", "reason": "forced_differentiate",
+                                           "content_similarity": None, "uncertain": False})
+                else:  # smart
+                    decision = decide_id_conflict(node, existing)
+                    if decision["decision"] == "differentiate":
+                        effective_id = _next_available_id(store, nid)
+                    id_resolutions.append({"requested_id": nid, "effective_id": effective_id, **decision})
+        if effective_id != nid:
+            id_map[nid] = effective_id
+
         props = {k: v for k, v in node.items() if k != "password"}
         props["node_type"] = valid_node_type
+        props["id"] = effective_id  # keep the stored id property in sync when differentiated
 
         store.write(
             "MERGE (n {id:$id}) SET n:RuntimeNode SET n += $props",
-            {"id": nid, "props": props},
+            {"id": effective_id, "props": props},
         )
         nodes_upserted += 1
-        upserted_ids.append(nid)
+        upserted_ids.append(effective_id)
 
     rels_upserted = 0
     for rel in relations:
@@ -819,9 +849,13 @@ def execute_graph_upsert(store: GraphStore, args: dict[str, Any], server_passwor
             raise ToolError("each relation needs `source`, `relation`, `target`")
         rtype = safe_rel(str(rel["relation"]))
         rprops = {k: v for k, v in rel.items() if k not in ("source", "target", "relation", "password")}
+        # Re-point relations at the differentiated id so they attach to the node
+        # this write just created, not the pre-existing collision.
+        src = id_map.get(str(rel["source"]), rel["source"])
+        tgt = id_map.get(str(rel["target"]), rel["target"])
         store.write(
             f"MATCH (a {{id:$s}}) MATCH (b {{id:$t}}) MERGE (a)-[r:`{rtype}`]->(b) SET r += $props",
-            {"s": rel["source"], "t": rel["target"], "props": rprops},
+            {"s": src, "t": tgt, "props": rprops},
         )
         rels_upserted += 1
 
@@ -883,13 +917,18 @@ def execute_graph_upsert(store: GraphStore, args: dict[str, Any], server_passwor
                     "suggested_relation": "CONTAINS" if ctype == "space" else "RELATED_TO",
                 })
 
-    _audit_write("graph_upsert", {"nodes": nodes_upserted, "relations": rels_upserted, "validation_errors": len(validation_errors)})
+    _audit_write("graph_upsert", {"nodes": nodes_upserted, "relations": rels_upserted,
+                                  "validation_errors": len(validation_errors),
+                                  "on_id_conflict": on_id_conflict,
+                                  "differentiated": len(id_map)})
     provenance = dict(provenance_base)
     provenance.update({"executor": "graph_upsert_ref", "timestamp": int(time.time() * 1000)})
     return {
         "information_status": "measured",
         "nodesUpserted": nodes_upserted,
         "relationsUpserted": rels_upserted,
+        "on_id_conflict": on_id_conflict,
+        "id_resolutions": id_resolutions,
         "validation_errors": validation_errors,
         "suggested_corrections": suggested_corrections,
         "orphan_nodes": orphan_nodes,
