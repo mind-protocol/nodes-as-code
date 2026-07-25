@@ -65,6 +65,8 @@ SCOPE_FILTER_ALLOWED = set(
 )
 RUN_TIMEOUT_DEFAULT = float(os.getenv("MIND_RUN_TIMEOUT", "60"))
 AUDIT_LOG = REPO_ROOT / "agent1-migration" / "run-audit.log"
+DETACHED_LOG_DIR = REPO_ROOT / "agent1-migration" / "detached-logs"
+DETACHED_PID_DIR = REPO_ROOT / "agent1-migration" / "pids"
 MCP_FAILURE_LOG = REPO_ROOT / "agent1-migration" / "mcp-failures.jsonl"
 MCP_FAILURE_STREAM_ID = "narrative:l2:mcp:failure-reports"
 
