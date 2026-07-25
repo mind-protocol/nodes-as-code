@@ -331,23 +331,135 @@ def execute_graph_query(graph, args, cap, provenance_base, timeout_seconds) -> d
             "truncated": truncated, "provenance": provenance, "redactions": []}
 
 
+def _audit_run(detail: dict[str, Any]) -> None:
+    try:
+        AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with AUDIT_LOG.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"at": datetime.now(timezone.utc).isoformat(), **detail},
+                                ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
+
+def _spawn_detached(command: str, cwd: Path, stdin_text: str | None,
+                    provenance_base: dict[str, Any]) -> dict[str, Any]:
+    """Start `command` as a background process that outlives BOTH this request
+    and the MCP server itself, then return immediately.
+
+    Rationale (fixes the lifecycle axis): the foreground path below is a
+    synchronous, timeout-bounded, request-scoped `subprocess.run`. Launching a
+    long-lived loop/daemon through it makes the call block until the request's
+    timeout (or the HTTP gateway's, → 502), and tears the child down before it
+    reaches steady state — e.g. a loop killed before its git commit. A detached
+    spawn breaks that coupling.
+
+    Epistemic honesty: obtaining a pid is a *measured* fact about the spawn. It
+    is NOT proof the process is healthy or even still alive one tick later — that
+    must be confirmed by an independent readback (sense / heartbeat), never by
+    this call returning. The result says so explicitly.
+    """
+    DETACHED_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    DETACHED_PID_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = int(time.time() * 1000)
+    log_path = DETACHED_LOG_DIR / f"detached-{stamp}.log"
+    log_fh = open(log_path, "ab", buffering=0)  # noqa: SIM115 (handed to the child)
+    popen_kwargs: dict[str, Any] = {
+        "shell": True, "cwd": str(cwd),
+        "stdout": log_fh, "stderr": subprocess.STDOUT,
+        "stdin": subprocess.PIPE if stdin_text is not None else subprocess.DEVNULL,
+    }
+    if os.name == "nt":
+        # DETACHED_PROCESS + new group so the child owns no console and ignores
+        # CTRL signals aimed at the server. CREATE_BREAKAWAY_FROM_JOB lets it
+        # escape the scheduled-task Job object (whose teardown would otherwise
+        # kill the whole tree, taking the loop with it). Breakaway raises if the
+        # Job forbids it, so fall back without it.
+        base_flags = (getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
+                      | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200))
+        breakaway = 0x01000000  # CREATE_BREAKAWAY_FROM_JOB
+        try:
+            proc = subprocess.Popen(command, creationflags=base_flags | breakaway, **popen_kwargs)
+        except OSError:
+            proc = subprocess.Popen(command, creationflags=base_flags, **popen_kwargs)
+    else:
+        proc = subprocess.Popen(command, start_new_session=True, **popen_kwargs)
+
+    if stdin_text is not None and proc.stdin is not None:
+        try:
+            proc.stdin.write(stdin_text.encode("utf-8"))
+            proc.stdin.close()
+        except OSError:
+            pass
+
+    pid = proc.pid
+    pid_path = DETACHED_PID_DIR / f"detached-{stamp}.pid"
+    try:
+        pid_path.write_text(str(pid), encoding="utf-8")
+    except OSError:
+        pid_path = None  # type: ignore[assignment]
+
+    _audit_run({"command": command, "detached": True, "pid": pid,
+                "log": str(log_path)})
+    provenance = dict(provenance_base)
+    provenance.update({"executor": "terminal_command_ref", "cwd": str(cwd),
+                       "mode": "detached", "timestamp": stamp})
+    return {
+        "command": command,
+        "detached": True,
+        "pid": pid,
+        "log_path": str(log_path),
+        "pid_path": str(pid_path) if pid_path else None,
+        "returncode": None,
+        "stdout": "",
+        "stderr": "",
+        "timedOut": False,
+        # The spawn is measured (real pid). Liveness/health is deliberately NOT
+        # asserted here — a running process is not proof of healthy behavior.
+        "information_status": "measured",
+        "spawn_status": "spawned",
+        "health_status": "unknown",
+        "verified": False,
+        "note": ("Process spawned detached; it survives this request and the MCP "
+                 "server. Confirm liveness and health by readback (sense / "
+                 "heartbeat), not by this call returning."),
+        "provenance": provenance,
+    }
+
+
 def execute_run(args: dict[str, Any], provenance_base: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(args, dict):
         raise ToolError("arguments must be an object")
     command = args.get("command")
     if not isinstance(command, str) or not command.strip():
         raise ToolError("`command` must be a non-empty string")
+
+    # Payload axis: `stdin` carries large data to the process's standard input,
+    # so callers pass big payloads via e.g. `python -` instead of embedding them
+    # in `command` and hitting the OS command-line length limit (≈8 KB under
+    # cmd.exe, 32 KB for CreateProcess on Windows).
+    stdin_text = args.get("stdin")
+    if stdin_text is not None and not isinstance(stdin_text, str):
+        raise ToolError("`stdin` must be a string")
+
+    # Lifecycle axis: `detach` starts a background process and returns at once.
+    detach = args.get("detach", False)
+    if not isinstance(detach, bool):
+        raise ToolError("`detach` must be a boolean")
+
+    cwd = REPO_ROOT
+    if detach:
+        return _spawn_detached(command, cwd, stdin_text, provenance_base)
+
     timeout = args.get("timeout", RUN_TIMEOUT_DEFAULT)
     if not isinstance(timeout, (int, float)) or isinstance(timeout, bool) or timeout <= 0:
         raise ToolError("`timeout` must be a positive number of seconds")
     timeout = min(float(timeout), 600.0)
-    cwd = REPO_ROOT
     started = time.monotonic()
     timed_out = False
     try:
         completed = subprocess.run(
             command, shell=True, cwd=str(cwd), capture_output=True, text=True,
-            timeout=timeout,
+            timeout=timeout, input=stdin_text,
         )
         returncode = completed.returncode
         stdout, stderr = completed.stdout, completed.stderr
@@ -355,19 +467,17 @@ def execute_run(args: dict[str, Any], provenance_base: dict[str, Any]) -> dict[s
         timed_out = True
         returncode = None
         stdout = exc.stdout or ""
-        stderr = (exc.stderr or "") + f"\n[timed out after {timeout}s]"
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", "replace")
+        stderr = exc.stderr or ""
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", "replace")
+        stderr = stderr + f"\n[timed out after {timeout}s]"
     duration_ms = round((time.monotonic() - started) * 1000, 2)
     provenance = dict(provenance_base)
     provenance.update({"executor": "terminal_command_ref", "cwd": str(cwd),
                        "durationMs": duration_ms, "timestamp": int(time.time() * 1000)})
-    try:
-        AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
-        with AUDIT_LOG.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps({"at": datetime.now(timezone.utc).isoformat(),
-                                 "command": command, "returncode": returncode,
-                                 "timedOut": timed_out}, ensure_ascii=False) + "\n")
-    except OSError:
-        pass
+    _audit_run({"command": command, "returncode": returncode, "timedOut": timed_out})
     return {
         "command": command,
         "returncode": returncode,
