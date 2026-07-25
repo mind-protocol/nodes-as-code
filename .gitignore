@@ -81,4 +81,7 @@ agent1-migration/run-audit.log
 # Fichiers de test temporaires
 test-results/
 tmp/
-temp/
+temp/ 
+# Runtime process state 
+agent1-migration/pids/ 
+agent1-migration/endpoint-logs/ 
