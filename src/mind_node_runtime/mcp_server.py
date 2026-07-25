@@ -34,23 +34,34 @@ import sys
 import threading
 import time
 import traceback
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import re
 from typing import Any
 
-from .always_up import always_up_server_loop, record_server_error
+from .always_up import always_up_server_loop, flux_latency, record_server_error
 from .config import Settings
 from .graph import GraphStore
-from .think import (
-    DEFAULT_MAX_TICKS,
-    DEFAULT_THINK_CITIZEN,
-    DEFAULT_THINK_TEXT,
-    WAKE_THRESHOLD,
-    execute_think,
-)
+from .viz_projections import l1_snapshot, l2_runtime_map, project_view, recent_activity
+from .talk import execute_talk
 
+
+def execute_viz_projection(store, arguments, provenance):
+    view = arguments.get("view", "l2")
+    if view == "l1":
+        result = l1_snapshot(store, arguments.get("citizen", "actor:citizen:nlr_ai"), arguments.get("limit", 100))
+    elif view == "l2":
+        result = l2_runtime_map(store, arguments.get("limit", 300))
+    elif view == "project":
+        result = project_view(store, arguments.get("project_id", "project:space:l2:mcp:visual-decorator-v0:manifest-v0"), arguments.get("limit", 300))
+    elif view == "activity":
+        result = recent_activity(store, arguments.get("limit", 80))
+    else:
+        raise ToolError(f"unsupported viz view: {view}")
+    result["provenance"] = {**result.get("provenance", {}), **provenance, "executor": "viz_projection_ref", "readOnly": True}
+    return result
 SERVER_NAME = "mind-nodes-as-code"
 SERVER_VERSION = "0.3.0"
 MCP_PROTOCOL_VERSION = "2024-11-05"
@@ -64,15 +75,77 @@ SCOPE_FILTER_ALLOWED = set(
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:_-."
 )
 RUN_TIMEOUT_DEFAULT = float(os.getenv("MIND_RUN_TIMEOUT", "60"))
+# Command-line length axis. With shell=True on Windows, `command` runs as
+# `cmd.exe /c "<command>"`, whose total line budget is ~8191 chars; past it
+# cmd.exe rejects the WHOLE line ("The input line is too long.", rc 1) BEFORE
+# running anything — safe (no partial effect) but opaque. We reject proactively
+# with an actionable error instead. POSIX ARG_MAX is far larger, so the guard is
+# Windows-only. Graph authority: behavior:l2:mcp:run-command /
+# algorithm:l2:mcp:run-command (see scripts/_changeset_run_length_guard.py).
+CMD_MAX_COMMAND_CHARS = 8000
 AUDIT_LOG = REPO_ROOT / "agent1-migration" / "run-audit.log"
 DETACHED_LOG_DIR = REPO_ROOT / "agent1-migration" / "detached-logs"
 DETACHED_PID_DIR = REPO_ROOT / "agent1-migration" / "pids"
 MCP_FAILURE_LOG = REPO_ROOT / "agent1-migration" / "mcp-failures.jsonl"
 MCP_FAILURE_STREAM_ID = "narrative:l2:mcp:failure-reports"
+# Response-time stream. One JSONL record per dispatched JSON-RPC call, written by
+# the `flux_latency` decorator on `McpServer.dispatch`. Cheap disk append (never a
+# per-call graph write — see always_up.flux_latency). The always-on rollup loop
+# (scripts/latency_rollup_loop.py) aggregates this into a graph Metric/Health.
+LATENCY_LOG = REPO_ROOT / "agent1-migration" / "response-times.jsonl"
 
 
 def log(*parts: Any) -> None:
     print(*parts, file=sys.stderr, flush=True)
+
+
+def _dispatch_latency_record(args: Any, kwargs: Any, result: Any, exc: BaseException | None,
+                            duration_ms: float) -> dict[str, Any] | None:
+    """Build the JSONL record for one dispatched JSON-RPC call (used by the
+    `flux_latency` decorator on `McpServer.dispatch`). Observational only: it
+    reads the already-computed result/exception and never alters them.
+
+    Epistemic honesty: `total_ms` is a *measured* wall-clock fact about this call.
+    `ok`/`information_status` are copied from the response, not re-derived — the
+    log never claims success the response didn't."""
+    message = args[1] if len(args) > 1 else kwargs.get("message")
+    if not isinstance(message, dict):
+        message = {}
+    method = message.get("method")
+    # Pure transport notifications carry no response-time signal worth streaming.
+    if isinstance(method, str) and method.startswith("notifications/"):
+        return None
+    params = message.get("params") or {}
+    tool = params.get("name") if method == "tools/call" else None
+
+    ok = exc is None
+    info_status = returncode = timed_out = None
+    if isinstance(result, dict):
+        if result.get("error"):
+            ok = False
+        inner = result.get("result")
+        if isinstance(inner, dict):
+            structured = inner.get("structuredContent")
+            if isinstance(structured, dict):
+                info_status = structured.get("information_status")
+                returncode = structured.get("returncode")
+                timed_out = structured.get("timedOut")
+
+    record: dict[str, Any] = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "method": method,
+        "tool": tool,
+        "total_ms": duration_ms,
+        "ok": ok,
+        "information_status": info_status,
+    }
+    if returncode is not None:
+        record["returncode"] = returncode
+    if timed_out is not None:
+        record["timed_out"] = timed_out
+    if exc is not None:
+        record["error"] = repr(exc)[:200]
+    return record
 
 
 def _read_secret_file(name: str) -> str | None:
@@ -164,7 +237,7 @@ def resolve_capability(graph: ReadOnlyGraph, capability_id: str) -> dict[str, An
 def envelope_is_read_only(cap: dict[str, Any]) -> bool:
     e = cap["effects"]
     return (
-        cap["executorType"] in ("graph_query_ref", "sense_ref")
+        cap["executorType"] in ("graph_query_ref", "sense_ref", "viz_projection_ref")
         and e.get("graphRead") == "allowed_with_resolved_scope"
         and e.get("graphWrite") == "forbidden"
         and e.get("filesystemWrite") == "forbidden"
@@ -194,19 +267,20 @@ def envelope_allows_write(cap: dict[str, Any]) -> bool:
     )
 
 
-def envelope_allows_think(cap: dict[str, Any]) -> bool:
-    """The `think` envelope: read L1 + write ONLY internal-cognition nodes into
-    it, and (optionally) reach a local LLM. No filesystem, no subprocess, no
-    arbitrary graph write. `allowed_for_internal_cognition` is a bounded write
-    grant distinct from the password-gated general `graph_write`."""
+def envelope_allows_talk(cap: dict[str, Any]) -> bool:
+    """The `talk` envelope: read + write ONLY the resolved membrane boundary
+    graph — a graph physically isolated from the L1 kernel — reaching no
+    filesystem, subprocess, or secondary network. `allowed_within_membrane_boundary`
+    is a bounded write grant distinct from both the password-gated general
+    `graph_write` and the internal-cognition grant used by `think`."""
     e = cap["effects"]
     return (
-        cap["executorType"] == "think_ref"
+        cap["executorType"] == "talk_ref"
         and e.get("graphRead") == "allowed_with_resolved_scope"
-        and e.get("graphWrite") == "allowed_for_internal_cognition"
+        and e.get("graphWrite") == "allowed_within_membrane_boundary"
         and e.get("filesystemWrite") == "forbidden"
         and e.get("subprocess") == "forbidden"
-        and e.get("secondaryNetwork") in ("forbidden", "allowed_local_llm")
+        and e.get("secondaryNetwork") == "forbidden"
     )
 
 
@@ -433,6 +507,16 @@ def execute_run(args: dict[str, Any], provenance_base: dict[str, Any]) -> dict[s
     if not isinstance(command, str) or not command.strip():
         raise ToolError("`command` must be a non-empty string")
 
+    # Command-line length guard (see CMD_MAX_COMMAND_CHARS). Raised BEFORE any
+    # spawn — atomic rejection, no partial execution, no forbidden host effect —
+    # so the caller gets an actionable message instead of cmd.exe's opaque rc-1.
+    if os.name == "nt" and len(command) > CMD_MAX_COMMAND_CHARS:
+        raise ToolError(
+            f"`command` is {len(command)} characters; the Windows cmd.exe line "
+            f"limit is ~{CMD_MAX_COMMAND_CHARS}. Move the large payload to `stdin` "
+            f"(e.g. a script read via `python -`) or split the command."
+        )
+
     # Payload axis: `stdin` carries large data to the process's standard input,
     # so callers pass big payloads via e.g. `python -` instead of embedding them
     # in `command` and hitting the OS command-line length limit (≈8 KB under
@@ -457,12 +541,17 @@ def execute_run(args: dict[str, Any], provenance_base: dict[str, Any]) -> dict[s
     started = time.monotonic()
     timed_out = False
     try:
+        # encoding+errors='replace' (not bare text=True): a command emitting
+        # non-UTF-8 bytes must never crash the subprocess reader thread. That
+        # crash left stdout=None -> `stdout[-20000:]` TypeError -> no HTTP
+        # response -> the caller hangs / gateway 502, and (worse) the wedged
+        # call held the server's global dispatch lock, stalling every later POST.
         completed = subprocess.run(
-            command, shell=True, cwd=str(cwd), capture_output=True, text=True,
-            timeout=timeout, input=stdin_text,
+            command, shell=True, cwd=str(cwd), capture_output=True,
+            encoding="utf-8", errors="replace", timeout=timeout, input=stdin_text,
         )
         returncode = completed.returncode
-        stdout, stderr = completed.stdout, completed.stderr
+        stdout, stderr = completed.stdout or "", completed.stderr or ""
     except subprocess.TimeoutExpired as exc:
         timed_out = True
         returncode = None
@@ -760,48 +849,50 @@ def execute_sense(graph: ReadOnlyGraph, args: dict[str, Any], provenance_base: d
     }
 
 
-def _validate_think_args(args: dict[str, Any]) -> dict[str, Any]:
-    """Validate/normalize `think` arguments. All fields optional with defaults."""
+def _validate_talk_args(args: dict[str, Any]) -> dict[str, Any]:
+    """Validate/normalize `talk` arguments. `message` and `targetActorId` are
+    required; sender and membrane fields default at the executor when omitted.
+    An empty/whitespace message fails here rather than deep in the executor."""
     if not isinstance(args, dict):
         raise ToolError("arguments must be an object")
 
-    text = args.get("text", DEFAULT_THINK_TEXT)
-    if text is None:
-        text = DEFAULT_THINK_TEXT
-    if not isinstance(text, str):
-        raise ToolError("`text` must be a string")
+    message = args.get("message")
+    if not isinstance(message, str) or not message.strip():
+        raise ToolError("`message` must be a non-empty string")
 
-    citizen = args.get("citizen", DEFAULT_THINK_CITIZEN)
-    if citizen is None:
-        citizen = DEFAULT_THINK_CITIZEN
-    if not isinstance(citizen, str) or not citizen.strip():
-        raise ToolError("`citizen` must be a non-empty string")
+    target = args.get("targetActorId")
+    if not isinstance(target, str) or not target.strip():
+        raise ToolError("`targetActorId` must be a non-empty canonical Actor id")
 
-    max_ticks = args.get("max_ticks", DEFAULT_MAX_TICKS)
-    if max_ticks is None:
-        max_ticks = DEFAULT_MAX_TICKS
-    if not isinstance(max_ticks, int) or isinstance(max_ticks, bool):
-        raise ToolError("`max_ticks` must be an integer")
-    if max_ticks < 1:
-        raise ToolError("`max_ticks` must be >= 1")
-    max_ticks = min(max_ticks, 200)
+    out: dict[str, Any] = {"message": message, "targetActorId": target}
 
-    return {"text": text, "citizen": citizen, "max_ticks": max_ticks}
+    # Optional fields: only forward them when present so execute_talk's own
+    # defaults (sender=human:user, membraneSpaceId=space:membrane:l1-boundary-v0,
+    # membraneGraphName=MEMBRANE_GRAPH) remain the single source of truth.
+    for key in ("senderActorId", "membraneSpaceId", "membraneGraphName"):
+        val = args.get(key)
+        if val is None:
+            continue
+        if not isinstance(val, str) or not val.strip():
+            raise ToolError(f"`{key}` must be a non-empty string when provided")
+        out[key] = val
+
+    return out
 
 
-def execute_think_tool(store: GraphStore, args: dict[str, Any],
-                       provenance_base: dict[str, Any]) -> dict[str, Any]:
-    """Dispatcher-facing wrapper: validate args, then run the think loop against
-    the L1 (read-write) store."""
-    v = _validate_think_args(args)
-    return execute_think(
-        store,
-        text=v["text"],
-        citizen=v["citizen"],
-        max_ticks=v["max_ticks"],
-        wake_threshold=WAKE_THRESHOLD,
-        provenance_base=provenance_base,
-    )
+def execute_talk_tool(args: dict[str, Any],
+                      provenance_base: dict[str, Any]) -> dict[str, Any]:
+    """Dispatcher-facing wrapper for the `talk` tool. Delegates to
+    `mind_node_runtime.talk.execute_talk`, which resolves and writes the
+    membrane boundary graph (physically isolated from the L1 kernel). No kernel
+    (`self.rw`) handle is passed: execute_talk builds its own store against the
+    resolved membrane graph, matching the `allowed_within_membrane_boundary`
+    envelope, which forbids any kernel write."""
+    v = _validate_talk_args(args)
+    result = execute_talk(None, **v)
+    if isinstance(result, dict):
+        result.setdefault("provenance", {**provenance_base, "executor": "talk_ref"})
+    return result
 
 
 # --------------------------------------------------------------------------- #
@@ -1134,7 +1225,12 @@ class McpServer:
         self.run_enabled = os.getenv("MIND_ENABLE_RUN", "0") == "1"
         self.write_password = os.getenv("MIND_WRITE_PASSWORD") or _read_secret_file(".mcp-write-password")
         self.rw = GraphStore(settings)  # read-write handle, used only by password-gated write tools
-        self._lock = threading.Lock()
+        # No global dispatch lock: GraphStore now holds a PER-THREAD FalkorDB
+        # connection, so concurrent requests never share a connection and cannot
+        # corrupt each other's protocol stream. Independent calls therefore run in
+        # parallel — a slow graph write no longer blocks every other request behind
+        # a mutex (verified by scripts/_stress_graph_concurrency.py). The DB server
+        # still serializes each command atomically.
         # Live push of `notifications/tools/list_changed`. Since tools/list is
         # derived fresh from the graph on every call, a client's cached manifest
         # only goes stale when the *active binding set* changes underneath it.
@@ -1204,65 +1300,91 @@ class McpServer:
         return {"tools": [{"name": t["name"], "description": t["description"],
                            "inputSchema": t["inputSchema"]} for t in tools]}
 
+    @contextmanager
+    def _graph_section(self):
+        """Graph critical section — now LOCK-FREE. Each thread owns its FalkorDB
+        connection (see GraphStore), so no global mutex is needed here and
+        independent requests run concurrently; the DB serializes each command
+        atomically. Kept as a context manager to mark the boundary and make it
+        obvious where a guard would go if the connection model ever changed."""
+        yield
+
     def call_tool(self, name: str, arguments: dict[str, Any], *, authenticated: bool) -> dict[str, Any]:
         """Resolve a tool to its active binding + capability, then execute.
 
         Returns the structured tool output. Raises ToolError/ForbiddenError.
+
+        Concurrency: graph resolution and graph-touching executors run inside
+        `_graph_section()`, which is lock-free because each thread has its own
+        FalkorDB connection (see GraphStore). Concurrent requests no longer
+        serialize behind a global mutex. The subprocess executor
+        (`terminal_command_ref`) runs entirely outside that section so a
+        long-running or `detach`ed command holds no shared resource at all.
         """
-        tools = {t["name"]: t for t in active_tool_bindings(self.graph)}
-        tool = tools.get(name)
-        if tool is None:
-            raise ToolError(f"unknown or inactive tool: {name!r}")
-        cap = resolve_capability(self.graph, tool["capabilityId"])
-        if cap is None:
-            raise ToolError(f"capability unavailable: {tool['capabilityId']}")
-        if not cap["registered"]:
-            raise ToolError(f"capability not registered: {tool['capabilityId']}")
+        with self._graph_section():
+            tools = {t["name"]: t for t in active_tool_bindings(self.graph)}
+            tool = tools.get(name)
+            if tool is None:
+                raise ToolError(f"unknown or inactive tool: {name!r}")
+            cap = resolve_capability(self.graph, tool["capabilityId"])
+            if cap is None:
+                raise ToolError(f"capability unavailable: {tool['capabilityId']}")
+            if not cap["registered"]:
+                raise ToolError(f"capability not registered: {tool['capabilityId']}")
 
-        # Graph-declared input adapter: normalize raw arguments upstream of the
-        # executor when the tool contract names one. Executors stay unaware.
-        adapter_id = tool.get("inputAdapter")
-        if adapter_id:
-            arguments = apply_input_adapter(adapter_id, arguments)
+            # Graph-declared input adapter: normalize raw arguments upstream of the
+            # executor when the tool contract names one. Executors stay unaware.
+            adapter_id = tool.get("inputAdapter")
+            if adapter_id:
+                arguments = apply_input_adapter(adapter_id, arguments)
 
-        provenance_base = {"graph": self.settings.graph_name, "host": self.settings.host,
-                           "port": self.settings.port, "bindingId": tool["bindingId"],
-                           "contractId": tool["contractId"], "capabilityId": tool["capabilityId"],
-                           "mainLoopId": tool["mainLoopId"]}
+            provenance_base = {"graph": self.settings.graph_name, "host": self.settings.host,
+                               "port": self.settings.port, "bindingId": tool["bindingId"],
+                               "contractId": tool["contractId"], "capabilityId": tool["capabilityId"],
+                               "mainLoopId": tool["mainLoopId"]}
 
-        executor_type = cap["executorType"]
-        if executor_type in ("graph_query_ref", "sense_ref"):
-            if not envelope_is_read_only(cap):
-                raise ForbiddenError("capability envelope is not a verified read-only envelope")
-            if executor_type == "sense_ref":
-                return execute_sense(self.graph, arguments, provenance_base)
-            return execute_graph_query(self.graph, arguments, cap, provenance_base, self.timeout_seconds)
+            executor_type = cap["executorType"]
+            if executor_type in ("graph_query_ref", "sense_ref"):
+                if not envelope_is_read_only(cap):
+                    raise ForbiddenError("capability envelope is not a verified read-only envelope")
+                if executor_type == "sense_ref":
+                    return execute_sense(self.graph, arguments, provenance_base)
+                return execute_graph_query(self.graph, arguments, cap, provenance_base, self.timeout_seconds)
 
-        if executor_type == "terminal_command_ref":
-            if not envelope_allows_subprocess(cap):
-                raise ForbiddenError("capability envelope does not authorize subprocess execution")
-            if not self.run_enabled:
-                raise ForbiddenError("run tool is disabled (set MIND_ENABLE_RUN=1 to enable)")
-            # Authenticated-caller requirement dropped by explicit operator decision:
-            # `run` is gated solely by MIND_ENABLE_RUN. `authenticated` is unused here.
-            return execute_run(arguments, provenance_base)
+            if executor_type == "viz_projection_ref":
+                if not envelope_is_read_only(cap):
+                    raise ForbiddenError("viz capability envelope is not read-only")
+                return execute_viz_projection(self.rw, arguments, provenance_base)
 
-        if executor_type == "think_ref":
-            if not envelope_allows_think(cap):
-                raise ForbiddenError("capability envelope does not authorize internal cognition")
-            return execute_think_tool(self.rw, arguments, provenance_base)
+            if executor_type == "talk_ref":
+                if not envelope_allows_talk(cap):
+                    raise ForbiddenError("capability envelope does not authorize membrane talk delivery")
+                return execute_talk_tool(arguments, provenance_base)
 
-        if executor_type == "graph_upsert_ref":
-            if not envelope_allows_write(cap):
-                raise ForbiddenError("capability envelope does not authorize graph writes")
-            return execute_graph_upsert(self.rw, arguments, self.write_password, provenance_base)
+            if executor_type == "graph_upsert_ref":
+                if not envelope_allows_write(cap):
+                    raise ForbiddenError("capability envelope does not authorize graph writes")
+                return execute_graph_upsert(self.rw, arguments, self.write_password, provenance_base)
 
-        if executor_type == "graph_cypher_ref":
-            if not envelope_allows_write(cap):
-                raise ForbiddenError("capability envelope does not authorize graph writes")
-            return execute_graph_cypher(self.rw, arguments, self.write_password, provenance_base)
+            if executor_type == "graph_cypher_ref":
+                if not envelope_allows_write(cap):
+                    raise ForbiddenError("capability envelope does not authorize graph writes")
+                return execute_graph_cypher(self.rw, arguments, self.write_password, provenance_base)
 
-        raise ToolError(f"no executor bound for capability executor_type {executor_type!r}")
+            if executor_type == "terminal_command_ref":
+                if not envelope_allows_subprocess(cap):
+                    raise ForbiddenError("capability envelope does not authorize subprocess execution")
+                if not self.run_enabled:
+                    raise ForbiddenError("run tool is disabled (set MIND_ENABLE_RUN=1 to enable)")
+                # Validated. Fall through and execute OUTSIDE the graph section.
+                # `authenticated` is unused: run is gated solely by MIND_ENABLE_RUN.
+            else:
+                raise ToolError(f"no executor bound for capability executor_type {executor_type!r}")
+
+        # terminal_command_ref only: the subprocess runs outside the graph section
+        # and touches no shared connection, so a long-lived or detached command
+        # cannot affect concurrent graph requests.
+        return execute_run(arguments, provenance_base)
 
     def handle_tools_call(self, params: dict[str, Any], *, authenticated: bool) -> dict[str, Any]:
         name = params.get("name")
@@ -1272,6 +1394,7 @@ class McpServer:
                 "structuredContent": structured,
                 "isError": structured.get("information_status") == "measurement_failed"}
 
+    @flux_latency(LATENCY_LOG, _dispatch_latency_record)
     def dispatch(self, message: dict[str, Any], *, authenticated: bool) -> dict[str, Any] | None:
         msg_id = message.get("id")
         method = message.get("method")
@@ -1280,17 +1403,20 @@ class McpServer:
             return None
         started_at = time.monotonic()
         try:
-            with self._lock:
-                if method == "initialize":
-                    result = self.handle_initialize(params)
-                elif method == "ping":
-                    result = {}
-                elif method == "tools/list":
+            # Lock-free: per-thread FalkorDB connections (GraphStore) let concurrent
+            # requests run in parallel. `initialize`/`ping` are pure; `tools/list`
+            # and `tools/call` touch the graph through their own thread connection.
+            if method == "initialize":
+                result = self.handle_initialize(params)
+            elif method == "ping":
+                result = {}
+            elif method == "tools/list":
+                with self._graph_section():
                     result = self.handle_tools_list(params)
-                elif method == "tools/call":
-                    result = self.handle_tools_call(params, authenticated=authenticated)
-                else:
-                    return self._error(msg_id, -32601, f"method not found: {method}")
+            elif method == "tools/call":
+                result = self.handle_tools_call(params, authenticated=authenticated)
+            else:
+                return self._error(msg_id, -32601, f"method not found: {method}")
             if method == "tools/call" and isinstance(result, dict):
                 structured = result.get("structuredContent") or {}
                 if isinstance(structured, dict) and structured.get("information_status") == "measurement_failed":

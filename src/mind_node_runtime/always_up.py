@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import functools
 import json
+import os
 import sys
+import threading
 import time
 import traceback
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable
 
 from .config import Settings
@@ -14,11 +17,85 @@ from .graph import GraphStore
 
 SERVER_SPACE_ID = "space:l2:mcp:nodes-as-code-server-v0"
 STREAM_DECORATOR_SPACE_ID = "space:l2:mcp:stream-logger-decorator-v0"
+LATENCY_DECORATOR_SPACE_ID = "space:l2:mcp:flux-latency-decorator-v0"
 HEALTH_NODE_ID = "health:l2:mcp:nodes-as-code-server"
 ERROR_LOG_NODE_ID = "moment:l2:mcp:server-error-log"
 
 LOG_STREAM_NARRATIVE_ID = "narrative:l2:mcp:stream-recent-logs"
 ERROR_STREAM_NARRATIVE_ID = "narrative:l2:mcp:stream-recent-errors"
+
+
+# --------------------------------------------------------------------------- #
+# Flux latency decorator                                                       #
+#                                                                             #
+# A "flux" decorator that measures the wall-clock latency of the wrapped flow  #
+# and appends ONE JSON-line per call to an on-disk log. Deliberately NOT a     #
+# per-call graph write: the request path already holds the server's global     #
+# dispatch lock, and a graph write per request would add latency and lock      #
+# contention to the very flow being measured. The disk append is cheap,        #
+# non-blocking, and — critically — can never fail or slow the wrapped call:    #
+# every measurement-side error is swallowed. A separate always-on rollup loop  #
+# turns this raw stream into a bounded graph Metric/Health (one write per       #
+# interval), keeping epistemic honesty (p50/p95/max are *measured*, absence is  #
+# *known_absent*) without taxing the hot path.                                 #
+# --------------------------------------------------------------------------- #
+_LATENCY_WRITE_LOCK = threading.Lock()
+
+
+def append_jsonl(log_path: str | os.PathLike[str], record: dict[str, Any]) -> None:
+    """Append one JSON object as a line to `log_path` (created on demand).
+
+    Serialized across threads by a process-local lock so concurrent request
+    threads never interleave a half-written line. Never raises: a logging
+    failure must not turn into a request failure."""
+    try:
+        path = Path(log_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        line = json.dumps(record, ensure_ascii=False, default=str)
+        with _LATENCY_WRITE_LOCK:
+            with path.open("a", encoding="utf-8") as fh:
+                fh.write(line + "\n")
+    except Exception as exc:  # measurement must never break the measured flow
+        print(f"[flux_latency] append failed: {exc}", file=sys.stderr)
+
+
+def flux_latency(
+    log_path: str | os.PathLike[str],
+    record_builder: Callable[..., dict[str, Any] | None],
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Decorate a flow so every invocation is timed and one JSONL record is
+    appended to `log_path`.
+
+    `record_builder(args, kwargs, result, exc, duration_ms)` returns the dict to
+    log (or None to skip this call, e.g. notifications). The wrapped function's
+    return value and raised exceptions are passed through unchanged — this
+    decorator is observational only.
+    """
+
+    def deco(fn: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(fn)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            started = time.monotonic()
+            result: Any = None
+            exc: BaseException | None = None
+            try:
+                result = fn(*args, **kwargs)
+                return result
+            except BaseException as e:  # noqa: BLE001 (re-raised below, just observed)
+                exc = e
+                raise
+            finally:
+                duration_ms = round((time.monotonic() - started) * 1000, 2)
+                try:
+                    record = record_builder(args, kwargs, result, exc, duration_ms)
+                    if record is not None:
+                        append_jsonl(log_path, record)
+                except Exception as log_exc:  # never fail the wrapped call
+                    print(f"[flux_latency] record failed: {log_exc}", file=sys.stderr)
+
+        return wrapper
+
+    return deco
 
 
 DECORATOR_CODE_NODE_ID = "code:l2:mcp:always-up-decorator:v0"
@@ -29,14 +106,21 @@ def ensure_loop_auto_linked(
     space_id: str,
     fn_name: str,
     module_name: str = "runtime",
+    health_node_id: str | None = None,
 ) -> None:
     """Ensures that space_id and CodeDefinition exist in graph and are explicitly linked
 
     to the always_up decorator code node and stream logger decorator space loop.
+
+    ``health_node_id`` lets a loop own its OWN health node instead of the shared
+    MCP-server health node. When omitted it defaults to the legacy global node so
+    existing loops keep byte-for-byte behaviour; passing a per-loop id decouples a
+    loop's crash health from the MCP server signal it may itself be watching.
     """
     timestamp_iso = datetime.now(timezone.utc).isoformat()
     code_node_id = f"code:{module_name}:{fn_name.replace('_', '-')}:v0"
     code_node_name = f"CodeDefinition · {fn_name} v0"
+    resolved_health_id = health_node_id or HEALTH_NODE_ID
 
     try:
         graph_store.write(
@@ -58,12 +142,17 @@ def ensure_loop_auto_linked(
                           c.status = 'active',
                           c.created_at = $ts
 
-            WITH s, c
+            MERGE (h:RuntimeNode {id:$health_id})
+            ON CREATE SET h.node_type = 'thing',
+                          h.subtype = 'health',
+                          h.status = 'active',
+                          h.created_at = $ts
+
+            WITH s, c, h
             MATCH (ld:RuntimeNode {id:$stream_decorator_id})
             MATCH (cd:RuntimeNode {id:$decorator_code_id})
             MATCH (nl:RuntimeNode {id:$log_stream_id})
             MATCH (ne:RuntimeNode {id:$error_stream_id})
-            MATCH (h:RuntimeNode {id:$health_id})
             MERGE (s)-[:WRAPPED_BY_DECORATOR]->(ld)
             MERGE (s)-[:DEFINED_BY]->(c)
             MERGE (c)-[:USES_DECORATOR]->(cd)
@@ -81,7 +170,7 @@ def ensure_loop_auto_linked(
                 "decorator_code_id": DECORATOR_CODE_NODE_ID,
                 "log_stream_id": LOG_STREAM_NARRATIVE_ID,
                 "error_stream_id": ERROR_STREAM_NARRATIVE_ID,
-                "health_id": HEALTH_NODE_ID,
+                "health_id": resolved_health_id,
                 "ts": timestamp_iso,
             },
         )
@@ -164,14 +253,21 @@ def record_server_error(
     space_id: str = SERVER_SPACE_ID,
     error_exc: Exception | None = None,
     context: str = "server_loop_crash",
+    health_node_id: str | None = None,
 ) -> dict[str, Any]:
     """Sets health status to 0, persists error into narrative:l2:mcp:stream-recent-errors
 
     and moment:l2:mcp:server-error-log, and creates an incident task node in graph.
+
+    ``health_node_id`` targets a per-loop health node instead of the shared MCP
+    server node. When omitted it defaults to the legacy global node so existing
+    callers are unchanged; a loop that watches the MCP health node should pass its
+    own id so its crashes never falsify the very signal it observes.
     """
     timestamp_iso = datetime.now(timezone.utc).isoformat()
     tb_str = traceback.format_exc() if error_exc else ""
     error_msg = repr(error_exc) if error_exc else "Unknown error"
+    resolved_health_id = health_node_id or HEALTH_NODE_ID
 
     error_entry = {
         "timestamp": timestamp_iso,
@@ -191,10 +287,11 @@ def record_server_error(
         )
         graph_store.write(
             """
-            MATCH (h {id:$health_id})
+            MERGE (h:RuntimeNode {id:$health_id})
+            ON CREATE SET h.node_type = 'thing', h.subtype = 'health'
             SET h.health_status = 0, h.status = 'degraded', h.last_error = $err, h.updated_at = $ts
             """,
-            {"health_id": HEALTH_NODE_ID, "err": error_msg, "ts": timestamp_iso},
+            {"health_id": resolved_health_id, "err": error_msg, "ts": timestamp_iso},
         )
     except Exception as exc:
         print(f"[always_up] Failed to update health_status to 0 in graph: {exc}", file=sys.stderr)
@@ -334,6 +431,7 @@ def always_up(
     backoff_seconds: float = 1.0,
     auto_link: bool = True,
     graph_store: GraphStore | None = None,
+    health_node_id: str | None = None,
 ) -> Callable[..., Any]:
     """Universal Always Up decorator.
 
@@ -345,6 +443,11 @@ def always_up(
         2. Parametrized decorator:
             @always_up(space_id="space:l2:my-worker-loop-v0")
             def my_worker(): ...
+
+    ``health_node_id`` decouples this loop's crash health from the shared MCP
+    server health node. When omitted the legacy global node is used (unchanged
+    behaviour). A loop that watches the MCP health node MUST pass its own id so a
+    crash of the loop never marks the watched MCP signal as degraded.
     """
     actual_space_id = space_id
     target_fn = None
@@ -368,7 +471,9 @@ def always_up(
                     graph_store = None
 
             if auto_link and graph_store:
-                ensure_loop_auto_linked(graph_store, resolved_space_id, fn.__name__)
+                ensure_loop_auto_linked(
+                    graph_store, resolved_space_id, fn.__name__, health_node_id=health_node_id
+                )
 
             restart_count = 0
             while True:
@@ -397,6 +502,7 @@ def always_up(
                             space_id=resolved_space_id,
                             error_exc=exc,
                             context=f"{fn.__name__}_attempt_{restart_count}",
+                            health_node_id=health_node_id,
                         )
 
                     if max_restarts is not None and restart_count >= max_restarts:
