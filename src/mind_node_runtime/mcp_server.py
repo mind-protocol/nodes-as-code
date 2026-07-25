@@ -25,6 +25,7 @@ Transports:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import hmac
 import json
 import os
@@ -379,6 +380,19 @@ def execute_run(args: dict[str, Any], provenance_base: dict[str, Any]) -> dict[s
 MAX_WRITE_NODES = 500
 MAX_WRITE_RELATIONS = 1000
 MAX_CYPHER_ROWS = 500
+
+# --- Smart id-conflict resolution -----------------------------------------
+# When a write targets an id that already exists, `on_id_conflict` decides the
+# outcome. `merge` (default for the programmatic/batch `graph_upsert`) keeps the
+# historic idempotent MERGE-by-id. `smart` (default for the agent-facing
+# `graph_write`) inspects the incoming node against the stored one and either
+# MERGES it (same entity, update in place) or DIFFERENTIATES it (distinct
+# entity, written under a fresh `-N` suffixed id). Thresholds are explicit so the
+# decision is inspectable, and the uncertain middle band never silently merges.
+ID_CONFLICT_MODES = {"merge", "smart", "differentiate", "reject"}
+SMART_MERGE_SIMILARITY = 0.80
+SMART_DIFFERENTIATE_SIMILARITY = 0.35
+MAX_ID_SUFFIX_TRIES = 1000
 
 
 def _verify_write_password(server_password: str | None, args: dict[str, Any]) -> None:
