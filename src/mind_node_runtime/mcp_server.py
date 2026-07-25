@@ -1433,11 +1433,17 @@ def openapi_spec(public_url: str, run_enabled: bool) -> dict[str, Any]:
                 "operationId": "run",
                 "summary": "Execute a shell command on the host and return its output.",
                 "description": "Runs the received command in the project directory. "
-                               "Gated only by MIND_ENABLE_RUN=1; no caller authentication required.",
+                               "Gated only by MIND_ENABLE_RUN=1; no caller authentication required. "
+                               "Pass large payloads via `stdin` (not embedded in `command`) to avoid the "
+                               "OS command-line length limit. Set `detach` to start a long-lived process "
+                               "in the background and return immediately (no timeout / gateway 502); its "
+                               "health is then unknown until confirmed by readback (sense/heartbeat).",
                 "requestBody": {"required": True, "content": {"application/json": {"schema": {
                     "type": "object",
                     "properties": {"command": {"type": "string"},
-                                   "timeout": {"type": "number"}},
+                                   "timeout": {"type": "number"},
+                                   "stdin": {"type": "string"},
+                                   "detach": {"type": "boolean"}},
                     "required": ["command"],
                 }}}},
                 "responses": {"200": {"description": "Command result",
