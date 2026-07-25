@@ -48,7 +48,7 @@ class Worker:
         )
         rule_rows = self.store.read(
             """
-            MATCH (rule)
+            MATCH (rule:RuntimeNode)
             WHERE rule.node_type='thing'
               AND rule.subtype='trigger_rule'
               AND rule.status='active'
@@ -68,7 +68,7 @@ class Worker:
             if supplied_inputs is not None and not isinstance(supplied_inputs, dict):
                 self.store.write(
                     """
-                    MATCH (event {id:$event_id})
+                    MATCH (event:RuntimeNode {id:$event_id})
                     SET event.status='invalid',
                         event.last_error='payload.inputs must be an object',
                         event.resolved_at=$now
@@ -126,11 +126,11 @@ class Worker:
                 )
                 self.store.write(
                     """
-                    MATCH (event {id:$event_id})
-                    MATCH (rule {id:$rule_id})
-                    MATCH (program {id:$program_id})
-                    MATCH (contract {id:$contract_id})
-                    MATCH (target {id:$target_id})
+                    MATCH (event:RuntimeNode {id:$event_id})
+                    MATCH (rule:RuntimeNode {id:$rule_id})
+                    MATCH (program:RuntimeNode {id:$program_id})
+                    MATCH (contract:RuntimeNode {id:$contract_id})
+                    MATCH (target:RuntimeNode {id:$target_id})
                     MERGE (intent:RuntimeNode {id:$intent_id})
                     ON CREATE SET
                         intent.node_type='moment',
@@ -177,7 +177,7 @@ class Worker:
 
             self.store.write(
                 """
-                MATCH (event {id:$event_id})
+                MATCH (event:RuntimeNode {id:$event_id})
                 SET event.status=$status,
                     event.matched_rule_count=$matched,
                     event.resolved_at=$now
@@ -197,7 +197,7 @@ class Worker:
         lease_until = now + self.settings.lease_seconds * 1000
         rows = self.store.write(
             """
-            MATCH (intent)
+            MATCH (intent:RuntimeNode)
             WHERE intent.node_type='moment'
               AND intent.subtype='execution_intent'
               AND intent.status IN ['queued','retryable_failure']
@@ -239,7 +239,7 @@ class Worker:
         trace_id = f"trace:{uuid.uuid4()}"
         started = self.store.write(
             """
-            MATCH (intent {id:$intent_id})
+            MATCH (intent:RuntimeNode {id:$intent_id})
             WHERE intent.status='claimed'
               AND intent.claimed_by=$worker_id
               AND intent.lease_until > $now
@@ -332,9 +332,9 @@ class Worker:
             value_json = canonical_json(output.value)
             self.store.write(
                 """
-                MATCH (intent {id:$intent_id})
-                MATCH (run {id:$run_id})
-                MATCH (target {id:$target_id})
+                MATCH (intent:RuntimeNode {id:$intent_id})
+                MATCH (run:RuntimeNode {id:$run_id})
+                MATCH (target:RuntimeNode {id:$target_id})
                 CREATE (result:RuntimeNode {
                     id:$result_id,
                     node_type:'thing',
@@ -380,8 +380,8 @@ class Worker:
             delay_ms = 5000 if intent.attempt_count == 1 else 30000
             self.store.write(
                 """
-                MATCH (intent {id:$intent_id})
-                MATCH (run {id:$run_id})
+                MATCH (intent:RuntimeNode {id:$intent_id})
+                MATCH (run:RuntimeNode {id:$run_id})
                 SET run.status=$run_status,
                     run.completed_at=$failed,
                     run.duration_ms=$failed - run.started_at,
@@ -407,7 +407,7 @@ class Worker:
         now = int(time.time() * 1000)
         rows = self.store.write(
             """
-            MATCH (intent)
+            MATCH (intent:RuntimeNode)
             WHERE intent.node_type='moment'
               AND intent.subtype='execution_intent'
               AND intent.status IN ['claimed','running']
