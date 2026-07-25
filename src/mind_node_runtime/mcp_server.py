@@ -435,6 +435,96 @@ def safe_rel(r: str) -> str:
     return re.sub(r'[^A-Za-z0-9_]', '_', str(r or ""))
 
 
+# --------------------------------------------------------------------------- #
+# Smart id-conflict resolution (pure, deterministic, inspectable)             #
+# --------------------------------------------------------------------------- #
+def _norm_text(s: Any) -> str:
+    """Lowercase + collapse whitespace. Empty/None -> ''."""
+    return " ".join(str(s or "").lower().split())
+
+
+def _content_hash(s: Any) -> str:
+    return hashlib.sha256(_norm_text(s).encode("utf-8")).hexdigest()
+
+
+def _token_jaccard(a: Any, b: Any) -> float:
+    """Token-set Jaccard over normalized text. Both empty -> 1.0 (identical),
+    exactly one empty -> 0.0. Deterministic; no external models required."""
+    ta, tb = set(_norm_text(a).split()), set(_norm_text(b).split())
+    if not ta and not tb:
+        return 1.0
+    if not ta or not tb:
+        return 0.0
+    union = len(ta | tb)
+    return (len(ta & tb) / union) if union else 0.0
+
+
+def _names_match(a: Any, b: Any) -> bool:
+    """Names match when equal after normalization, or (for names longer than 4
+    chars) when one contains the other. Mirrors the existing check_similarity
+    heuristic so 'same entity' is judged consistently across the module."""
+    na, nb = _norm_text(a), _norm_text(b)
+    if not na or not nb:
+        return False
+    if na == nb:
+        return True
+    return len(na) > 4 and (na in nb or nb in na)
+
+
+def decide_id_conflict(incoming: dict[str, Any], existing: dict[str, Any]) -> dict[str, Any]:
+    """Decide whether an incoming node colliding on `id` with `existing` is the
+    SAME entity (merge/update in place) or a DIFFERENT entity (differentiate under
+    a fresh id). Priority: node_type conflict > name identity > content similarity.
+
+    Never silently merges in the uncertain content band; it differentiates and
+    flags `uncertain=True` so ambiguity is surfaced rather than resolved by a
+    convenient default. Pure function: no I/O, deterministic."""
+    in_type = _norm_text(incoming.get("node_type") or incoming.get("type"))
+    ex_type = _norm_text(existing.get("node_type"))
+    in_name, ex_name = incoming.get("name"), existing.get("name")
+    in_content, ex_content = incoming.get("content"), existing.get("content")
+
+    def result(decision: str, reason: str, similarity: float | None = None,
+               uncertain: bool = False) -> dict[str, Any]:
+        return {"decision": decision, "reason": reason,
+                "content_similarity": similarity, "uncertain": uncertain}
+
+    # 1. Different ontological kind sharing an id -> distinct entities.
+    if in_type and ex_type and in_type != ex_type:
+        return result("differentiate", "node_type_conflict")
+
+    # 2. Names available on both sides settle identity directly.
+    if _norm_text(in_name) and _norm_text(ex_name):
+        if _names_match(in_name, ex_name):
+            return result("merge", "name_match")
+        return result("differentiate", "name_conflict")
+
+    # 3. A name is missing somewhere -> judge on content.
+    if _norm_text(in_content) and _norm_text(ex_content):
+        if _content_hash(in_content) == _content_hash(ex_content):
+            return result("merge", "identical_content", 1.0)
+        sim = round(_token_jaccard(in_content, ex_content), 4)
+        if sim >= SMART_MERGE_SIMILARITY:
+            return result("merge", "high_content_similarity", sim)
+        if sim <= SMART_DIFFERENTIATE_SIMILARITY:
+            return result("differentiate", "low_content_similarity", sim)
+        return result("differentiate", "uncertain_similarity", sim, uncertain=True)
+
+    # 4. No comparable evidence -> conservative in-place update (metadata write).
+    return result("merge", "insufficient_evidence_default_merge")
+
+
+def _next_available_id(store: GraphStore, base_id: str) -> str:
+    """Return the first free `base_id-N` (N starting at 2). `base_id` is assumed
+    already taken (we only reach here on a real collision)."""
+    for n in range(2, MAX_ID_SUFFIX_TRIES + 2):
+        candidate = f"{base_id}-{n}"
+        rows = store.read("MATCH (x {id:$id}) RETURN count(x)", {"id": candidate})
+        if not rows or (rows[0][0] or 0) == 0:
+            return candidate
+    raise ToolError(f"too many id collisions for base id {base_id!r}")
+
+
 def execute_sense(graph: ReadOnlyGraph, args: dict[str, Any], provenance_base: dict[str, Any]) -> dict[str, Any]:
     """Execute the Citizen Sense & Situated State v0 loop (L1/L2/L3 perception)."""
     include_moments = args.get("include_moments", True)
