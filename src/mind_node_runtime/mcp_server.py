@@ -429,6 +429,10 @@ def _infer_suggested_type(node_id: str, subtype: str | None) -> str:
         return "narrative"
     if nid.startswith("space:") or nid.startswith("loop:") or "space" in sub or "module" in sub:
         return "space"
+    # `thing` is the ontology's general-object catch-all. Returning it (instead of
+    # falling off the end as None) guarantees the write path never stores a null
+    # node_type when the supplied one is invalid.
+    return "thing"
 
 
 def safe_rel(r: str) -> str:

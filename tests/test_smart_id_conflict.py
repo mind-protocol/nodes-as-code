@@ -82,10 +82,10 @@ class TestDecideIdConflictPure(unittest.TestCase):
         self.assertEqual(d["reason"], "low_content_similarity")
 
     def test_uncertain_band_differentiates_and_flags(self):
-        # ~0.5 overlap: neither >= 0.80 nor <= 0.35.
+        # Jaccard = 3/5 = 0.6: neither >= 0.80 nor <= 0.35.
         d = decide_id_conflict(
             {"node_type": "moment", "content": "alpha beta gamma delta"},
-            {"node_type": "moment", "content": "alpha beta epsilon zeta"},
+            {"node_type": "moment", "content": "alpha beta gamma epsilon"},
         )
         self.assertEqual(d["decision"], "differentiate")
         self.assertEqual(d["reason"], "uncertain_similarity")
