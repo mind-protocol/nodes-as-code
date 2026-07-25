@@ -700,6 +700,10 @@ def normalize_graph_write_arguments(arguments: dict[str, Any]) -> dict[str, Any]
         raise ToolError("arguments must be an object")
 
     control = {k: arguments[k] for k in GRAPH_WRITE_CONTROL_FIELDS if k in arguments}
+    # graph_write is the agent-facing façade: default to smart id-conflict
+    # resolution so accidental id collisions are merged-or-differentiated by
+    # content instead of blindly overwriting. Callers may override explicitly.
+    control.setdefault("on_id_conflict", "smart")
 
     # Canonical batch payload: leave nodes/relations intact.
     if "nodes" in arguments or "relations" in arguments:
